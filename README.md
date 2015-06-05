@@ -306,8 +306,8 @@ Accessions [TODO].
 
 ## important files
 
-| File                                | Description                                                         ||
-| ----------------------------------- | --------------------------------------------------------------------|
+| File                                | Description                                                         |
+|------------------------------------|---------------------------------------------------------------------|
 | transcript_catalogue.gbk *          | GenBank file describing **all annotated sequences**.                |
 | sequences-CDS.fa                    | Fasta with **coding sequences**.                                    |
 | sequences-mRNA.fa                   | Fasta with **transcript sequences** (w/o introns; clipped ends).    |
