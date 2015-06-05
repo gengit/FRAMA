@@ -1,0 +1,20 @@
+# positional weight matrix
+# produced by PWMsuite
+PWMsuite v2.0
+NAME    -
+ALPH    nucleotide
+SCALE   ln(freq)
+# min. score = -13.182
+# average score = -9.439
+# max. score = -2.430
+# information content [bit] = 3.32 (abs), 3.32 (rel)
+THRESH  -3.40
+WIDTH   6
+PWM
+      0.00     -3.00     -2.60     -1.90
+      0.00     -3.00     -2.90     -1.20
+     -1.90     -2.60	   -2.80      0.00
+      0.00     -2.80     -2.60     -1.60
+      0.00     -2.80     -3.00     -2.60
+      0.00     -3.10     -3.00     -3.00
+//

@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+# get make version
+MAKE_VERSION="$( make --version | perl -ne 'if (/GNU Make (\d)/) { print $1 }')"
+
+MAKE_OUTPUT=""
+if [ "$MAKE_VERSION" -gt "3" ]; then
+    MAKE_OUTPUT="-Otarget"
+fi
+
+function execute {
+    # note: make 4.0 does have output-sync to group output per target (about one year old)
+    # for now..just deal with possibly interleaved output for other versions
+    cd $3 && make $1 FILE:=$2 check
+    if [ $? -ne 0 ]; then exit 1; fi
+    cd $3 && make $1 -L FILE:=$2 trinity preprocess-assembly blast
+    if [ $? -ne 0 ]; then echo -e "\nPlease check error messages and consult log files.\n\n"; exit 1; fi
+    cd $3 && make $1 -j $CPUS $MAKE_OUTPUT -L FILE:=$2 blast-sum
+    if [ $? -ne 0 ]; then echo -e "\nPlease check error messages and consult log files.\n\n"; exit 1; fi
+    cd $3 && make $1 -L FILE:=$2 annotation vector
+    if [ $? -ne 0 ]; then echo -e "\nPlease check error messages and consult log files.\n\n"; exit 1; fi
+    cd $3 && make $1 -j $CPUS $MAKE_OUTPUT  -L FILE:=$2 fasta-conversion pipeline-stats functional
+    if [ $? -ne 0 ]; then echo -e "\nPlease check error messages and consult log files.\n\n"; exit 1; fi
+}
+
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+# 'unset CDPATH'?
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do 
+    DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+DIR=$(dirname $DIR)/src
+
+if [ -z "$1" ]
+then
+    echo -e "ERROR: Specify configuration file!"
+    echo ""
+    echo "USAGE:"
+    echo -e "\tFRAMA file.cfg [option]"
+    echo -e "\n"
+    echo "OPTIONS:"
+    echo -e "\tscratch, cleanup, verbose, silent\n"
+    exit 1;
+fi
+
+if [ ! -e "$1" ] 
+then
+    echo "File not found: $1"
+    exit 1;
+fi
+
+CONFIG=$(readlink -f $1)
+PARAMETER=$2
+if [ -z "$2" ] 
+then
+    PARAMETER=silent
+fi
+
+CPUS=$(cat $1 | perl -ne 'BEGIN {$found=0}; if (/^OPT_CPUS\s*:=\s*(\d+)/) { print $1; $found = 1; } END {print "1" if (not $found);}')
+
+case "$PARAMETER" in
+    # deligate cleanups
+    scratch)
+        cd $DIR && make FILE:=$1 full-cleanup 
+        execute "--silent" $CONFIG $DIR
+        ;;
+    cleanup)
+        cd $DIR && make FILE:=$1 cleanup
+        execute "--silent" $CONFIG $DIR
+        ;;
+    verbose)
+        # prints all commands
+        execute "" $CONFIG $DIR
+        ;;
+    silent)
+        # defaut: run in silent mode
+        execute "--silent" $CONFIG $DIR
+        ;;
+    *)
+        # assume further make parameter 
+        execute $PARAMETER $CONFIG $DIR
+esac

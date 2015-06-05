@@ -1,0 +1,544 @@
+LOCUS       NM_003218               2900 bp    mRNA    linear   PRI 17-APR-2013
+DEFINITION  Homo sapiens telomeric repeat binding factor (NIMA-interacting) 1
+            (TERF1), transcript variant 2, mRNA.
+ACCESSION   NM_003218
+VERSION     NM_003218.3  GI:189409139
+KEYWORDS    .
+FEATURES             Location/Qualifiers
+     source          1..2900
+                     /mol_type="mRNA"
+                     /map="8q21.11"
+                     /db_xref="taxon:9606"
+                     /chromosome="8"
+                     /organism="Homo sapiens"
+     gene            1..2900
+                     /db_xref="GeneID:7013"
+                     /db_xref="HGNC:11728"
+                     /db_xref="MIM:600951"
+                     /gene_synonym="hTRF1-AS; PIN2; t-TRF1; TRBF1; TRF; TRF1"
+                     /gene="TERF1"
+                     /note="telomeric repeat binding factor (NIMA-interacting)
+                     1"
+     CDS             26..1285
+                     /gene_synonym="hTRF1-AS; PIN2; t-TRF1; TRBF1; TRF; TRF1"
+                     /protein_id="NP_003209.2"
+                     /gene="TERF1"
+                     /note="isoform 2 is encoded by transcript variant 2;
+                     NIMA-interacting protein 2; telomeric protein Pin2/TRF1;
+                     TTAGGG repeat-binding factor 1"
+                     /db_xref="GI:189409140"
+                     /db_xref="CCDS:CCDS6210.1"
+                     /db_xref="GeneID:7013"
+                     /db_xref="HGNC:11728"
+                     /db_xref="MIM:600951"
+                     /codon_start=1
+                     /product="telomeric repeat-binding factor 1 isoform 2"
+                     /translation="MAEDVSSAAPSPRGCADGRDADPTEEQMAETERNDEEQFECQEL
+                     LECQVQVGAPEEEEEEEEDAGLVAEAEAVAAGWMLDFLCLSLCRAFRDGRSEDFRRTR
+                     NSAEAIIHGLSSLTACQLRTIYICQFLTRIAAGKTLDAQFENDERITPLESALMIWGS
+                     IEKEHDKLHEEIQNLIKIQAIAVCMENGNFKEAEEVFERIFGDPNSHMPFKSKLLMII
+                     SQKDTFHSFFQHFSYNHMMEKIKSYVNYVLSEKSSTFLMKAAAKVVESKRTRTITSQD
+                     KPSGNDVEMETEANLDTRKRSHKNLFLSKLQHGTQQQDLNKKERRVGTPQSTKKKKES
+                     RRATESRIPVSKSQPVTPEKHRARKRQAWLWEEDKNLRSGVRKYGEGNWSKILLHYKF
+                     NNRTSVMLKDRWRTMKKLKLISSDSED"
+ORIGIN      
+        1 gcagtaccca agcgagccat ttaacatggc ggaggatgtt tcctcagcgg ccccgagccc
+       61 gcggggctgt gcggatggta gggatgccga ccctactgag gagcagatgg cagaaacaga
+      121 gagaaacgac gaggagcagt tcgaatgcca ggaactgctc gagtgccagg tgcaggtggg
+      181 ggcccccgag gaggaggagg aggaggagga ggacgcgggc ctggtggccg aggccgaggc
+      241 cgtggctgcc ggctggatgc tcgatttcct ctgcctctct ctttgccgag ctttccgcga
+      301 cggccgctcc gaggacttcc gcaggacccg caacagcgca gaggctatta ttcatggact
+      361 atccagtcta acagcttgcc agttgagaac gatatacata tgtcagtttt tgacaagaat
+      421 tgcagcagga aaaacccttg atgcacagtt tgaaaatgat gaacgaatta cacccttgga
+      481 atcagccctg atgatttggg gttcaattga aaaggaacat gacaaacttc atgaagaaat
+      541 acagaattta attaaaattc aggctatagc tgtttgtatg gaaaatggca actttaaaga
+      601 agcagaagaa gtctttgaaa gaatatttgg tgatccaaat tctcatatgc ctttcaaaag
+      661 caaattgctt atgataatct ctcagaaaga tacatttcat tccttttttc aacacttcag
+      721 ctacaaccac atgatggaga aaattaagag ttatgtgaat tatgtgctaa gtgaaaaatc
+      781 atcaaccttt ctaatgaagg cagcggcaaa agtagtagaa agcaaaagga caagaacaat
+      841 aacttctcaa gataaaccta gtggtaatga tgttgaaatg gaaactgaag ctaatttgga
+      901 tacaagaaaa aggtctcaca agaatctttt cttatctaag ttgcaacatg gaacccagca
+      961 acaagacctt aataagaaag aaagaagagt aggaactcct caaagtacaa aaaagaaaaa
+     1021 agaaagcaga agagccactg aaagcagaat acctgtttca aagagtcagc cggtaactcc
+     1081 tgaaaaacat cgagctagaa aaagacaggc atggctttgg gaagaagaca agaatttgag
+     1141 atctggcgtg aggaaatatg gagagggaaa ctggtctaaa atactgttgc attataaatt
+     1201 caacaaccgg acaagtgtca tgttaaaaga cagatggagg accatgaaga aactaaaact
+     1261 gatttcctca gacagcgaag actgattgtg tttgtaaaag cttgatgaaa ggacagttaa
+     1321 gtattttgat cactgcattt tgtttgaaac ttgtgtcatt gatgtaattt aaaacttttg
+     1381 tttaaagcat tacagtattt ttctgtgacc atcaattaat gagggtttgt gctaccagag
+     1441 ttaaagcata tgctatcatt gtattcttta agaaccttat tttgataaaa tgtaaatttg
+     1501 ttgaaccctg ccacatttag tatccccacc cccaaatcct gttccaatga aaaaattaaa
+     1561 acctgatacg aaaaaaaaaa aattccagtt aacctatttt gtgtctgtag gctgacctca
+     1621 accctgtaac gtaacccatt aaaatgaatt tctttttttt taagacagag tttctctctg
+     1681 ttgcccaggc tggagtgcag tggcgcaatt tcagctcact gcaacctctg cctcccaggt
+     1741 tcaagtgatt ctcctgcctc agcctcctga gtagctggga ttacaggcac acaccaccac
+     1801 gcccagctaa tttttgtatt tttagtagag gcggggtttc accatgctgg tcaggatgtt
+     1861 ctccaactcc tgacttcatg atccacccac ctcggcctcc caaagtgctg agattacaga
+     1921 cgtgagccac tgcgtcctgc ctaaaatgaa ttttctagat gattgaataa cagtagtcct
+     1981 ttgatagaag ataatgactt ggtttatggc cttaatatac tacttaatta cttaagatgt
+     2041 ttattaatag aatgataaat gtacagagta acctataagc atgacatact tttgctttca
+     2101 gtagtttcat gtaaagaaaa aaacttgaaa atagtaatac ctgagtaccc atgggaataa
+     2161 tagacactgg ggaggtaggg tggggagcgg gagcaagagc tgaaaaactt acctactggg
+     2221 gactgtgctc actacctggg tgacaggatc atacgtaccc caaacctcaa catcacacag
+     2281 tatactcagc taacaaacct gcccatgtgt ttcctgaatc taaaataaaa atcgaaataa
+     2341 tttttttaaa aaagaaaaag acaatagtat tacccatggg acaaaatttg tactattagc
+     2401 aagaatcatt ttgtgtctca tttagaaaca atttgacttt tgttccagtg tttaaacttt
+     2461 gacaaaaatg gttttgaata gatctttata acctgatgcc ataaatacaa gattctctga
+     2521 taccttcatt taatatatca atattgggcc taaaacagta ttctgtaaag cttaaattgg
+     2581 tattaactat gatcatcttg atgtctatga tagataataa acaaggtcat acatacctta
+     2641 ctaaacaatt ttggtttttc accaacattt tattctttaa aagatttaga ctaacagaat
+     2701 tatttagcat ttcgagtcat gtgctttatt tagcaagtga gtaaaaatat tggaatattg
+     2761 aagtatttgc ataaaaaatc aaatggtggt gttttgtaat ctctattgta tttcctatta
+     2821 aggtttcata tattactttc ccattgttcc tgaatttgtt atcctatata taaacagaaa
+     2881 catggatgag taccatatac
+//
+LOCUS       NM_005328               3275 bp    mRNA    linear   PRI 07-JUL-2013
+DEFINITION  Homo sapiens hyaluronan synthase 2 (HAS2), mRNA.
+ACCESSION   NM_005328 XM_938715
+VERSION     NM_005328.2  GI:169791020
+KEYWORDS    .
+FEATURES             Location/Qualifiers
+     source          1..3275
+                     /mol_type="mRNA"
+                     /map="8q24.12"
+                     /db_xref="taxon:9606"
+                     /chromosome="8"
+                     /organism="Homo sapiens"
+     gene            1..3275
+                     /db_xref="GeneID:3037"
+                     /db_xref="HGNC:4819"
+                     /db_xref="HPRD:07045"
+                     /db_xref="MIM:601636"
+                     /gene="HAS2"
+                     /note="hyaluronan synthase 2"
+     misc_feature    506..508
+                     /gene="HAS2"
+                     /note="upstream in-frame stop codon"
+     CDS             539..2197
+                     /protein_id="NP_005319.1"
+                     /gene="HAS2"
+                     /note="hyaluronate synthase 2; hyaluronic acid synthase
+                     2; HA synthase 2"
+                     /db_xref="GI:4885391"
+                     /db_xref="CCDS:CCDS6335.1"
+                     /db_xref="GeneID:3037"
+                     /db_xref="HGNC:4819"
+                     /db_xref="HPRD:07045"
+                     /db_xref="MIM:601636"
+                     /codon_start=1
+                     /product="hyaluronan synthase 2"
+                     /translation="MHCERFLCILRIIGTTLFGVSLLLGITAAYIVGYQFIQTDNYYF
+                     SFGLYGAFLASHLIIQSLFAFLEHRKMKKSLETPIKLNKTVALCIAAYQEDPDYLRKC
+                     LQSVKRLTYPGIKVVMVIDGNSEDDLYMMDIFSEVMGRDKSATYIWKNNFHEKGPGET
+                     DESHKESSQHVTQLVLSNKSICIMQKWGGKREVMYTAFRALGRSVDYVQVCDSDTMLD
+                     PASSVEMVKVLEEDPMVGGVGGDVQILNKYDSWISFLSSVRYWMAFNIERACQSYFGC
+                     VQCISGPLGMYRNSLLHEFVEDWYNQEFMGNQCSFGDDRHLTNRVLSLGYATKYTARS
+                     KCLTETPIEYLRWLNQQTRWSKSYFREWLYNAMWFHKHHLWMTYEAIITGFFPFFLIA
+                     TVIQLFYRGKIWNILLFLLTVQLVGLIKSSFASCLRGNIVMVFMSLYSVLYMSSLLPA
+                     KMFAIATINKAGWGTSGRKTIVVNFIGLIPVSVWFTILLGGVIFTIYKESKRPFSESK
+                     QTVLIVGTLLYACYWVMLLTLYVVLINKCGRRKKGQQYDMVLDV"
+                     /EC_number="2.4.1.212"
+     misc_feature    572..634
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS2"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92819.1);
+                     transmembrane region"
+     misc_feature    674..736
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS2"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92819.1);
+                     transmembrane region"
+     misc_feature    1661..1723
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS2"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92819.1);
+                     transmembrane region"
+     misc_feature    1745..1807
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS2"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92819.1);
+                     transmembrane region"
+     misc_feature    1826..1888
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS2"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92819.1);
+                     transmembrane region"
+     misc_feature    1964..2026
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS2"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92819.1);
+                     transmembrane region"
+     misc_feature    2069..2131
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS2"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92819.1);
+                     transmembrane region"
+ORIGIN      
+        1 gaagtcaaga cgtctggaaa gaattaccca gtcctggctt cgagcagccc attgaaccag
+       61 agacttgaaa cagccccagc caaagacttt tctcccaatt ctgcgcttcc tgggttctgc
+      121 tgagtcttcc acaggctttt tttttttttt tttttttttt taagacgaaa aagagatttt
+      181 ctgttatcgg gggcagaaag actgaagccc aaaaaaaaaa aaaaaaaaaa aagaaaagaa
+      241 aagaaaaaag aaaagttaat ttatttttaa agcataattt ttttaagaat tagactgaag
+      301 tgcaacggaa acataaagag aatattagtg aaattatttt ttaaagtggg gaagaatcaa
+      361 acatttaaga ctcccctatc ctttttaaat gttgttttta aatttcttat tttttttggc
+      421 cggtcgtctc aaattcatct gatctcttat tacctcaatt ttggaaactg cccgccaccg
+      481 accctccggg accacacaga caggctgagg acgactttat gaccaagagc tgaacaagat
+      541 gcattgtgag aggtttctat gtatcctgag aataattgga accacactct ttggagtctc
+      601 tctcctcctt ggaatcacag ctgcttatat tgttggctac cagtttatcc aaacggataa
+      661 ttactatttc tcttttggac tgtatggtgc ctttttggca tcacacctca tcatccaaag
+      721 cctgtttgcc tttttggagc accgaaaaat gaaaaaatcc ctagaaaccc ccataaagtt
+      781 gaacaaaaca gttgcccttt gcatcgctgc ctatcaagaa gatccagact acttaaggaa
+      841 atgtttgcaa tctgtgaaaa ggctaaccta ccctgggatt aaagttgtca tggtcataga
+      901 tgggaactca gaagatgacc tttacatgat ggacatcttc agtgaagtca tgggcagaga
+      961 caaatcagcc acttatatct ggaagaacaa cttccacgaa aagggtcccg gtgagacaga
+     1021 tgagtcacat aaagaaagct cgcaacacgt aacgcaattg gtcttgtcca acaaaagtat
+     1081 ctgcatcatg caaaaatggg gtggaaaaag agaagtcatg tacacagcct tcagagcact
+     1141 gggacgaagt gtggattatg tacaggtttg tgattcagac actatgcttg acccagcctc
+     1201 atctgtggag atggtaaaag ttttagaaga agatcccatg gttggaggtg ttgggggaga
+     1261 tgtccagatt ttaaacaagt acgattcctg gatctcattc ctcagcagtg taagatattg
+     1321 gatggctttt aatatagaaa gggcctgtca gtcttatttt gggtgtgttc agtgcattag
+     1381 tggacctctg ggaatgtaca gaaactcctt gttgcatgag tttgtggaag attggtacaa
+     1441 tcaagaattt atgggcaacc aatgtagctt tggtgatgac aggcatctca cgaaccgggt
+     1501 gctgagcctg ggctatgcaa caaaatacac agctcgatct aagtgcctta ctgaaacacc
+     1561 tatagaatat ctcagatggc taaaccagca gacccgttgg agcaagtcct acttccgaga
+     1621 atggctgtac aatgcaatgt ggtttcacaa acatcacttg tggatgacct acgaagcgat
+     1681 tatcactgga ttctttcctt tctttctcat tgccacagta atccagctct tctaccgggg
+     1741 taaaatttgg aacattctcc tcttcttgtt aactgtccag ctagtaggtc tcataaaatc
+     1801 atcttttgcc agctgcctta gaggaaatat cgtcatggtc ttcatgtctc tctactcagt
+     1861 gttatacatg tcgagtttac ttcccgccaa gatgtttgca attgcaacaa taaacaaagc
+     1921 tgggtggggc acatcaggaa ggaaaaccat tgttgttaat ttcataggac tcattccagt
+     1981 atcagtttgg tttacaatcc tcctgggtgg tgtgattttc accatttata aggagtctaa
+     2041 aaggccattt tcagaatcca aacagacagt tctaattgtt ggaacgttgc tctatgcatg
+     2101 ctattgggtc atgcttttga cgctgtatgt agttctcatc aataagtgtg gcaggcggaa
+     2161 gaagggacaa caatatgaca tggtgcttga tgtatgatct tccatgtttt gacgtttgca
+     2221 gtcacacaca acaccttagt tcctctaggg gctgtacagt attgtggcat cagataatgc
+     2281 caccaaagga gacatatcac tgctgctggg acttgaacaa agacatttat atgggtttat
+     2341 tttcattctg ccaaagtaaa acaatacatc aacaagaaga aactcagatt taacctgtta
+     2401 tttctatgaa aatgggatga attctttgtt tatgcacttt ttccttactg tgcatccgcc
+     2461 tgaaagtgtt ttgccctata tacctcacta gccatgcttt atgtgggtta tcatggaaga
+     2521 aaaggatttt ggaaactcaa ggaaaagttc tttcaaccta tacaacctaa cttatggact
+     2581 gttttgatag atgataattt ttttttttta ggaaggattt tctttttaac tttaccaaat
+     2641 gaaatgccaa aggaagtttt aaaggccgtt ggctgtgctg tattttgata taattgtact
+     2701 gtgtttttaa attttgtatg ccaatcttaa agacaaattt tgcatattct ctattttact
+     2761 tttctgccaa aataaacctg ttcttccttt tttaaaataa aataagttct taaaaaattt
+     2821 atacttaaaa aatcctgccc aaaatgtgaa gcttggttga ctgatgttca tgatagaaag
+     2881 aataaaatgt ttctctctct ctacctttta aaattgaata gtttatttct gtgaaagaag
+     2941 tatttaaact ttcaatattt taactttttg tttttatttc ttttagaaaa ggccaatata
+     3001 cctatcacac tttggaagta aaaatacaca ctttcgtgtg tacctaaaaa aaaaatcgtt
+     3061 gaaaatcaag gccaaaggta gtgcaatttt ttcattaaga tttaaaaaaa agggaatgat
+     3121 agtctttgaa agaaaacagt aggcatccag cactggacaa aacatgggta tcaaagatga
+     3181 ataatctttg gagattctgg cagtgttttc ccagaacaag tcaagtggaa agtggagaaa
+     3241 ttatctgtat aattttggac acatacaatg cagtt
+//
+LOCUS       NM_005329               4220 bp    mRNA    linear   PRI 29-APR-2013
+DEFINITION  Homo sapiens hyaluronan synthase 3 (HAS3), transcript variant 1,
+            mRNA.
+ACCESSION   NM_005329
+VERSION     NM_005329.2  GI:20302152
+KEYWORDS    .
+FEATURES             Location/Qualifiers
+     source          1..4220
+                     /mol_type="mRNA"
+                     /map="16q22.1"
+                     /db_xref="taxon:9606"
+                     /chromosome="16"
+                     /organism="Homo sapiens"
+     gene            1..4220
+                     /db_xref="GeneID:3038"
+                     /db_xref="HGNC:4820"
+                     /db_xref="HPRD:03889"
+                     /db_xref="MIM:602428"
+                     /gene="HAS3"
+                     /note="hyaluronan synthase 3"
+     CDS             157..1818
+                     /protein_id="NP_005320.2"
+                     /gene="HAS3"
+                     /note="isoform a is encoded by transcript variant 1;
+                     hyaluronic acid synthase 3; HA synthase 3; hyaluronate
+                     synthase 3"
+                     /db_xref="GI:20302153"
+                     /db_xref="CCDS:CCDS10871.1"
+                     /db_xref="GeneID:3038"
+                     /db_xref="HGNC:4820"
+                     /db_xref="HPRD:03889"
+                     /db_xref="MIM:602428"
+                     /codon_start=1
+                     /product="hyaluronan synthase 3 isoform a"
+                     /translation="MPVQLTTALRVVGTSLFALAVLGGILAAYVTGYQFIHTEKHYLS
+                     FGLYGAILGLHLLIQSLFAFLEHRRMRRAGQALKLPSPRRGSVALCIAAYQEDPDYLR
+                     KCLRSAQRISFPDLKVVMVVDGNRQEDAYMLDIFHEVLGGTEQAGFFVWRSNFHEAGE
+                     GETEASLQEGMDRVRDVVRASTFSCIMQKWGGKREVMYTAFKALGDSVDYIQVCDSDT
+                     VLDPACTIEMLRVLEEDPQVGGVGGDVQILNKYDSWISFLSSVRYWMAFNVERACQSY
+                     FGCVQCISGPLGMYRNSLLQQFLEDWYHQKFLGSKCSFGDDRHLTNRVLSLGYRTKYT
+                     ARSKCLTETPTKYLRWLNQQTRWSKSYFREWLYNSLWFHKHHLWMTYESVVTGFFPFF
+                     LIATVIQLFYRGRIWNILLFLLTVQLVGIIKATYACFLRGNAEMIFMSLYSLLYMSSL
+                     LPAKIFAIATINKSGWGTSGRKTIVVNFIGLIPVSIWVAVLLGGLAYTAYCQDLFSET
+                     ELAFLVSGAILYGCYWVALLMLYLAIIARRCGKKPEQYSLAFAEV"
+                     /EC_number="2.4.1.212"
+     misc_feature    202..264
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS3"
+                     /note="propagated from UniProtKB/Swiss-Prot (O00219.3);
+                     transmembrane region"
+     misc_feature    289..351
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS3"
+                     /note="propagated from UniProtKB/Swiss-Prot (O00219.3);
+                     transmembrane region"
+     misc_feature    1288..1350
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS3"
+                     /note="propagated from UniProtKB/Swiss-Prot (O00219.3);
+                     transmembrane region"
+     misc_feature    1381..1443
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS3"
+                     /note="propagated from UniProtKB/Swiss-Prot (O00219.3);
+                     transmembrane region"
+     misc_feature    1477..1539
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS3"
+                     /note="propagated from UniProtKB/Swiss-Prot (O00219.3);
+                     transmembrane region"
+     misc_feature    1576..1638
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS3"
+                     /note="propagated from UniProtKB/Swiss-Prot (O00219.3);
+                     transmembrane region"
+     misc_feature    1702..1764
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS3"
+                     /note="propagated from UniProtKB/Swiss-Prot (O00219.3);
+                     transmembrane region"
+     polyA_signal    4186..4191
+                     /gene="HAS3"
+     polyA_site      4203
+                     /gene="HAS3"
+     polyA_site      4212
+                     /gene="HAS3"
+     polyA_site      4220
+                     /gene="HAS3"
+ORIGIN      
+        1 gagtgcgttc gcggctgctt tgacctggtg ggcgccgcct ccggcactgc accgaggcgg
+       61 ggcgccagcg cccaggttgc tgggctggcc ttggcgcccc cttcccctac ccagagcgca
+      121 ggcaggcagg ggggtcccgc cgcgcccctt cagcatatgc cggtgcagct gacgacagcc
+      181 ctgcgtgtgg tgggcaccag cctgtttgcc ctggcagtgc tgggtggcat cctggcagcc
+      241 tatgtgacgg gctaccagtt catccacacg gaaaagcact acctgtcctt cggcctgtac
+      301 ggcgccatcc tgggcctgca cctgctcatt cagagccttt ttgccttcct ggagcaccgg
+      361 cgcatgcgac gtgccggcca ggccctgaag ctgccctccc cgcggcgggg ctcggtggca
+      421 ctgtgcattg ccgcatacca ggaggaccct gactacttgc gcaagtgcct gcgctcggcc
+      481 cagcgcatct ccttccctga cctcaaggtg gtcatggtgg tggatggcaa ccgccaggag
+      541 gacgcctaca tgctggacat cttccacgag gtgctgggcg gcaccgagca ggccggcttc
+      601 tttgtgtggc gcagcaactt ccatgaggca ggcgagggtg agacggaggc cagcctgcag
+      661 gagggcatgg accgtgtgcg ggatgtggtg cgggccagca ccttctcgtg catcatgcag
+      721 aagtggggag gcaagcgcga ggtcatgtac acggccttca aggccctcgg cgattcggtg
+      781 gactacatcc aggtgtgcga ctctgacact gtgctggatc cagcctgcac catcgagatg
+      841 cttcgagtcc tggaggagga tccccaagta gggggagtcg ggggagatgt ccagatcctc
+      901 aacaagtacg actcatggat ttccttcctg agcagcgtgc ggtactggat ggccttcaac
+      961 gtggagcggg cctgccagtc ctactttggc tgtgtgcagt gtattagtgg gcccttgggc
+     1021 atgtaccgca acagcctcct ccagcagttc ctggaggact ggtaccatca gaagttccta
+     1081 ggcagcaagt gcagcttcgg ggatgaccgg cacctcacca accgagtcct gagccttggc
+     1141 taccgaacta agtataccgc gcgctccaag tgcctcacag agacccccac taagtacctc
+     1201 cggtggctca accagcaaac ccgctggagc aagtcttact tccgggagtg gctctacaac
+     1261 tctctgtggt tccataagca ccacctctgg atgacctacg agtcagtggt cacgggtttc
+     1321 ttccccttct tcctcattgc cacggttata cagcttttct accggggccg catctggaac
+     1381 attctcctct tcctgctgac ggtgcagctg gtgggcatta tcaaggccac ctacgcctgc
+     1441 ttccttcggg gcaatgcaga gatgatcttc atgtccctct actccctcct ctatatgtcc
+     1501 agccttctgc cggccaagat ctttgccatt gctaccatca acaaatctgg ctggggcacc
+     1561 tctggccgaa aaaccattgt ggtgaacttc attggcctca ttcctgtgtc catctgggtg
+     1621 gcagttctcc tgggagggct ggcctacaca gcttattgcc aggacctgtt cagtgagaca
+     1681 gagctagcct tccttgtctc tggggctata ctgtatggct gctactgggt ggccctcctc
+     1741 atgctatatc tggccatcat cgcccggcga tgtgggaaga agccggagca gtacagcttg
+     1801 gcttttgctg aggtgtgaca tggcccccaa gcagagcggg taaagtgcaa tgggtaaggg
+     1861 agggaagggg aatggaagag aaaagacagg gtgggaggga ggagggagtg ctgtgtttta
+     1921 gtctcttaat ggtccaaagg acaaatctaa aatgcaaaga acggtgatgt agtatggcct
+     1981 gacagctctg tttagaggag gcaacactga tcccccagat gcagggctgc aggggattct
+     2041 gtgttttcag actgcctgtc tgcttgcatc tgcacatagg cagtagcctc ctcctgggct
+     2101 ccagagggca ctcagaagtt gtgctaaacc aagttaagtc ccattcagtg gcaacttgtg
+     2161 ataggtacct gagtgacggc aacctgcgga aggaggttct cccagcccat ctgaacacaa
+     2221 ccagaggtgg caggagaatt tctactgagc gagctgggcc ggttagtgta tgtcaccccc
+     2281 accccacccc taagtagtca tcaatgcaat aagattgcgc ctgagataca aggcccagaa
+     2341 gcctgatctt tgggcatcag aaaacagggt ccaggaatgg tgctttatgt gagatacccc
+     2401 actccacatc aacattccag ggatgagcca aaccagcagg gagttagcac tgaactgctt
+     2461 ttaaaagtgc acattaaaaa ggaaagtttg ccaggaggaa caaagagatt gtggtggtgc
+     2521 taaaggaggc cataagctac acagaggcct tgggtgttcc acctggaaac tgctcagacg
+     2581 tctagatggg ttcttagctt gtctgtgatc tctgctgggg agataaaaag attaagcccc
+     2641 aacatgttca gaaaagaagt gaagtcttgg gtattttaac ctgtatactc ttgaattcct
+     2701 ctcaaattca gctctgatct gaggctaaga cacactcccc acttcacttt cttcaaagcc
+     2761 acattttttg aggtatcact gcagtcacct cttctaccct catcatcata ggtaaggttt
+     2821 tcaaggtggc aattggggcg gagccccggc tcttatagaa gcttcagcag gaggcaagcg
+     2881 tgttctcagc acatatggga actatgagga gcctctgatc aaattggcta caatcttgga
+     2941 gctgcttgga cggattcctt ggcagccggg ttagcatgtg tgactttcag gctactgttc
+     3001 ttgacaatca tctccaatgg aaagcttttc agtgttccca aagtgaactc tcaaatccaa
+     3061 aatggttatc tttgagacca tccattctcc tcagtggctt ctccagggaa ttcttacagc
+     3121 caagttgtga cagtcactgc atttgcctgc ttctttccag aaaccaaact aggagatgaa
+     3181 actggttcct acatcctaag gttcttgctt tctctctcat gcctcctgag gctgtttttg
+     3241 gctgttttcc ctctgctgct tttggggaat gaggggaagc cattttccag tgacttgcaa
+     3301 tccaggctgt tctcagcgtt ttgagtttaa aacctgggat cctgactaag cctttgactt
+     3361 aagggttgct tgcttgccct ccaaatgtcc tttctcagag gggccagcta acccgtgcag
+     3421 aaccagcact aaggtggaca gcagacaaga gggcaagcct ctagtgtacc aagtgcttcc
+     3481 tacaaagacg caaggtgtgc tctgagccac agatgggcaa accctggtgc tttccttcat
+     3541 ctcccacgaa ctcaagggtt ttccaggtgt agctaacagt tgccacatca cacagacctc
+     3601 gagtttctgg taagactgct ggttgacatc agacccaacc catgaaggct ggaaggcagc
+     3661 aggcatttgc taaggcagct gatccaggca atcgttctgc tggccaagaa gttaaactat
+     3721 tttgagcatt agaatggagg aaatccggtc agccaagtgc agagttcaga cttcgctaag
+     3781 ggcttgtttt tcttcagcat ttacttgaag attaatgtag gatgacaggc tctcctggct
+     3841 gtcctaccat cagctctgcc ttgcactgtg gtcgtcaact ttcctcaaat caaaaacagg
+     3901 caggtacagg tagtgggctc acaacgtttg acctcgactg gtttttctaa gttattttgt
+     3961 acatttttca gcagcaaaac caaactgggt cttcagcttt atccccgttt cttgcaaggg
+     4021 aagagccttt atacaattgg acgcattttg gtttttcctc attgagaatt caaatcctct
+     4081 tttgtattgt ttctacaata atttgtaaac atatttattt ttacctgctt tttttttttt
+     4141 ttttaatttt caggtcaagt tttttatact gcacttattt gtcaaaataa agattctcac
+     4201 atatgccggt tatctcgaaa
+//
+LOCUS       NM_001523               2116 bp    mRNA    linear   PRI 07-JUL-2013
+DEFINITION  Homo sapiens hyaluronan synthase 1 (HAS1), mRNA.
+ACCESSION   NM_001523
+VERSION     NM_001523.2  GI:167466170
+KEYWORDS    .
+FEATURES             Location/Qualifiers
+     source          1..2116
+                     /mol_type="mRNA"
+                     /map="19q13.4"
+                     /db_xref="taxon:9606"
+                     /chromosome="19"
+                     /organism="Homo sapiens"
+     gene            1..2116
+                     /db_xref="GeneID:3036"
+                     /db_xref="HGNC:4818"
+                     /db_xref="MIM:601463"
+                     /gene_synonym="HAS"
+                     /gene="HAS1"
+                     /note="hyaluronan synthase 1"
+     CDS             36..1772
+                     /gene_synonym="HAS"
+                     /protein_id="NP_001514.2"
+                     /gene="HAS1"
+                     /note="hyaluronate synthase 1; HA synthase 1; hyaluronic
+                     acid synthase 1; huHAS1"
+                     /db_xref="GI:167466171"
+                     /db_xref="CCDS:CCDS12838.1"
+                     /db_xref="GeneID:3036"
+                     /db_xref="HGNC:4818"
+                     /db_xref="MIM:601463"
+                     /codon_start=1
+                     /product="hyaluronan synthase 1"
+                     /translation="MRQQDAPKPTPAACRCSGLARRVLTIAFALLILGLMTWAYAAGV
+                     PLASDRYGLLAFGLYGAFLSAHLVAQSLFAYLEHRRVAAAARGPLDAATARSVALTIS
+                     AYQEDPAYLRQCLASARALLYPRARLRVLMVVDGNRAEDLYMVDMFREVFADEDPATY
+                     VWDGNYHQPWEPAAAGAVGAGAYREVEAEDPGRLAVEALVRTRRCVCVAQRWGGKREV
+                     MYTAFKALGDSVDYVQVCDSDTRLDPMALLELVRVLDEDPRVGAVGGDVRILNPLDSW
+                     VSFLSSLRYWVAFNVERACQSYFHCVSCISGPLGLYRNNLLQQFLEAWYNQKFLGTHC
+                     TFGDDRHLTNRMLSMGYATKYTSRSRCYSETPSSFLRWLSQQTRWSKSYFREWLYNAL
+                     WWHRHHAWMTYEAVVSGLFPFFVAATVLRLFYAGRPWALLWVLLCVQGVALAKAAFAA
+                     WLRGCLRMVLLSLYAPLYMCGLLPAKFLALVTMNQSGWGTSGRRKLAANYVPLLPLAL
+                     WALLLLGGLVRSVAHEARADWSGPSRAAEAYHLAAGAGAYVGYWVAMLTLYWVGVRRL
+                     CRRRTGGYRVQV"
+                     /EC_number="2.4.1.212"
+     misc_feature    111..173
+                     /gene_synonym="HAS"
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS1"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92839.2);
+                     transmembrane region"
+     misc_feature    192..254
+                     /gene_synonym="HAS"
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS1"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92839.2);
+                     transmembrane region"
+     misc_feature    1233..1295
+                     /gene_synonym="HAS"
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS1"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92839.2);
+                     transmembrane region"
+     misc_feature    1326..1388
+                     /gene_synonym="HAS"
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS1"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92839.2);
+                     transmembrane region"
+     misc_feature    1407..1469
+                     /gene_synonym="HAS"
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS1"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92839.2);
+                     transmembrane region"
+     misc_feature    1527..1589
+                     /gene_synonym="HAS"
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS1"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92839.2);
+                     transmembrane region"
+     misc_feature    1656..1718
+                     /gene_synonym="HAS"
+                     /inference="non-experimental evidence, no additional
+                     details recorded"
+                     /gene="HAS1"
+                     /note="propagated from UniProtKB/Swiss-Prot (Q92839.2);
+                     transmembrane region"
+     polyA_signal    2065..2070
+                     /gene_synonym="HAS"
+                     /gene="HAS1"
+     polyA_site      2087
+                     /gene_synonym="HAS"
+                     /gene="HAS1"
+ORIGIN      
+        1 cggagagaag agagagcccg gccagaccca ctgcgatgag acagcaggac gcgcccaagc
+       61 ccactcctgc agcctgccgc tgctccggcc tggcccggag ggtgctgacc atcgccttcg
+      121 ccctgctcat cctgggcctc atgacctggg cctacgccgc cggggtgccg ctggcctccg
+      181 atcgctacgg cctcctggcc ttcggcctct acggggcctt cctttcagcg cacctggtgg
+      241 cgcagagcct cttcgcgtac ctggagcacc ggcgggtggc ggcggcggcg cgggggccgc
+      301 tggatgcagc caccgcgcgc agtgtggcgc tgaccatctc cgcctaccag gaggaccccg
+      361 cgtacctgcg ccagtgcctg gcgtccgccc gcgccctgct gtacccgcgc gcgcggctgc
+      421 gcgtcctcat ggtggtggat ggcaaccgcg ccgaggacct ctacatggtc gacatgttcc
+      481 gcgaggtctt cgctgacgag gaccccgcca cgtacgtgtg ggacggcaac taccaccagc
+      541 cctgggaacc cgcggcggcg ggcgcggtgg gcgccggagc ctatcgggag gtggaggcgg
+      601 aggatcctgg gcggctggca gtggaggcgc tggtgaggac tcgcaggtgc gtgtgcgtgg
+      661 cgcagcgctg gggcggcaag cgcgaggtca tgtacacagc cttcaaggcg ctcggagatt
+      721 cggtggacta cgtgcaggtc tgtgactcgg acacaaggtt ggaccccatg gcactgctgg
+      781 agctcgtgcg ggtactggac gaggaccccc gggtaggggc tgttggtggg gacgtgcgga
+      841 tccttaaccc tctggactcc tgggtcagct tcctaagcag cctgcgatac tgggtagcct
+      901 tcaatgtgga gcgggcttgt cagagctact tccactgtgt atcctgcatc agcggtcctc
+      961 taggcctata taggaataac ctcttgcagc agtttcttga ggcctggtac aaccagaagt
+     1021 tcctgggtac ccactgtact tttggggatg accggcacct caccaaccgc atgctcagca
+     1081 tgggttatgc taccaagtac acctccaggt cccgctgcta ctcagagacg ccctcgtcct
+     1141 tcctgcggtg gctgagccag cagacacgct ggtccaagtc gtacttccgt gagtggctgt
+     1201 acaacgcgct ctggtggcac cggcaccatg cgtggatgac ctacgaggcg gtggtctccg
+     1261 gcctgttccc cttcttcgtg gcggccactg tgctgcgtct gttctacgcg ggccgccctt
+     1321 gggcgctgct gtgggtgctg ctgtgcgtgc agggcgtggc actggccaag gcggccttcg
+     1381 cggcctggct gcggggctgc ctgcgcatgg tgcttctgtc gctctacgcg cccctctaca
+     1441 tgtgtggcct cctgcctgcc aagttcctgg cgctagtcac catgaaccag agtggctggg
+     1501 gcacctcggg ccggcggaag ctggccgcta actacgtccc tctgctgccc ctggcgctct
+     1561 gggcgctgct gctgcttggg ggcctggtcc gcagcgtagc acacgaggcc agggccgact
+     1621 ggagcggccc ttcccgcgca gccgaggcct accacttggc cgcgggggcc ggcgcctacg
+     1681 tgggctactg ggtggccatg ttgacgctgt actgggtggg cgtgcggagg ctttgccggc
+     1741 ggcggaccgg gggctaccgc gtccaggtgt gagtccagcc acgcggatgc cgcctcaagg
+     1801 gtcttcaggg gaggccagag gagagctgct gggccccgag ccacgaactt gctgggtggt
+     1861 tctctgggcc tcagtttccc tcctctgcaa aacgaggggg tcagcccaag attcttcagt
+     1921 ctggactata ttgggactgg gacttctggg tctccaggga gggtatttat tggtcagggt
+     1981 gtgggatctg aggagtggag ggaaagggtc ctgctttctc ctcgttctta tttaatctcc
+     2041 atttctactg tgtgatcagg atgtaataaa gaattttatt tattttcaaa aaaaaaaaaa
+     2101 aaaaaaaaaa aaaaaa
+//

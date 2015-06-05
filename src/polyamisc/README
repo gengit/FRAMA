@@ -1,0 +1,39 @@
+# package polyamisc
+#
+# copyright (c)
+#   FLI Jena, Genome Analysis Group, 2014
+# author
+#   K Szafranski, szafrans@fli-leibniz.de
+#
+# README - installment notices
+#
+
+Functions, program calls
+
+  polyaspwm_predict.pl seq.fa
+
+            Standard PAS prediction producing a *.csv format list
+
+  polyastrain_call_predict.sh seq.fa
+
+            The same standard prediction as with polyaspwm.pl, but doing live
+            prediction using PWM engine.
+
+  polyaspwm_predict.pl seq.fa | polyaspwm_scorenimg.sh
+
+            Format predictions to candidate density plot. Output is *.png
+            format image.
+
+
+External program ressources
+
+  PWMscanNt - package pwmsuite, K Szafranski
+            PWM engine for live prediction.
+
+  seqct   - package seqhdl, K Szafranski
+            Needed for live prediction using PWM engine.
+            Any other tool for seq length determination may step in, here
+
+  Plot.pl - package kPerl, K Szafranski
+            for visualization via polyaspwm.pl (or polyas_call_polyaspwm.sh)
+
