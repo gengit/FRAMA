@@ -306,29 +306,18 @@ Accessions [TODO].
 
 ## important files
 
-+-------------------------------------+--------------------------------------------------------------------+
-| File                                |Description                                                         | 
-+=====================================+====================================================================+
-| transcript_catalogue.gbk *          |GenBank file describing **all annotated sequences**.                |
-+-------------------------------------+--------------------------------------------------------------------+
-| sequences-CDS.fa                    |Fasta with **coding sequences**.                                    |
-+-------------------------------------+--------------------------------------------------------------------+
-| sequences-mRNA.fa                   |Fasta with **transcript sequences** (w/o introns; clipped ends).    |
-+-------------------------------------+--------------------------------------------------------------------+
-| assembly.fa                         |Repeat masked **trinity assembly**.                                 |
-+-------------------------------------+--------------------------------------------------------------------+
-| summary.pdf                         |General overview of transcript catalogue|                           |
-+-------------------------------------+--------------------------------------------------------------------+
-| tables/summary.csv                  |Table containing summary for each annotated transcript.             |
-+-------------------------------------+--------------------------------------------------------------------+
-| tables/cds.csv                      |CDS coordinates (1-based) on sequences-mRNA.fa.                     |
-+-------------------------------------+--------------------------------------------------------------------+
-| tables/annotation.csv               |Contig annotation (contig, refseq, strand, symbol).                 |
-+-------------------------------------+--------------------------------------------------------------------+
-|  tables/overview.csv                |Transcript catalogue details .                                      |
-+-------------------------------------+--------------------------------------------------------------------+
-| tables/transcriptome_statistic.csv  |Table containing descriptive statistics about transcript catalogoue.|
-+-------------------------------------+--------------------------------------------------------------------+
+| File                                | Description                                                         ||
+| ----------------------------------- | --------------------------------------------------------------------|
+| transcript_catalogue.gbk *          | GenBank file describing **all annotated sequences**.                |
+| sequences-CDS.fa                    | Fasta with **coding sequences**.                                    |
+| sequences-mRNA.fa                   | Fasta with **transcript sequences** (w/o introns; clipped ends).    |
+| assembly.fa                         | Repeat masked **trinity assembly**.                                 |
+| summary.pdf                         | General overview of transcript catalogue|                           |
+| tables/summary.csv                  | Table containing summary for each annotated transcript.             |
+| tables/cds.csv                      | CDS coordinates (1-based) on sequences-mRNA.fa.                     |
+| tables/annotation.csv               | Contig annotation (contig, refseq, strand, symbol).                 |
+|  tables/overview.csv                | Transcript catalogue details .                                      |
+| tables/transcriptome_statistic.csv  | Table containing descriptive statistics about transcript catalogoue.|
 
 *mRNA feature instead of 'gene' feature to limit mRNA boundaries in case of misassembled contigs 
 
