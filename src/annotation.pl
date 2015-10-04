@@ -98,36 +98,33 @@ Path to matrix to use for GENSCAN.
 use strict;
 use warnings;
 
-use Benchmark;
-
-use File::Path qw(make_path remove_tree);
-use File::Spec::Functions qw(catfile catdir);
-use Bio::DB::Fasta;
-use Parallel::ForkManager;
-use Bio::SeqIO;
-use Bio::DB::Taxonomy;
-
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
-use GenbankHelper;
-use Getopt::Long;
-use Storable;
-use POSIX qw/strftime/;
-use Data::Dumper;
-use Parallel::ForkManager;
-use File::Spec::Functions qw/splitpath/;
 
-use Bio::SimpleAlign;
-use Bio::AlignIO;
-use Bio::Seq;
-use Bio::SeqIO;
-use Bio::Location::Split;
-use Bio::Location::Simple;
-use Bio::Tools::Genscan;
+use GenbankHelper;
 
 use Pod::Usage;
+use Benchmark;
+use Storable;
+use Parallel::ForkManager;
+use POSIX qw/strftime/;
+use Data::Dumper;
+use Getopt::Long;
 
-use constant TDATE => uc(strftime "%d-%b-%Y", localtime);
+use File::Path qw(make_path remove_tree);
+use File::Spec::Functions qw(catfile catdir splitpath);
+
+use Bio::AlignIO;
+use Bio::DB::Fasta;
+use Bio::DB::Taxonomy;
+use Bio::Location::Simple;
+use Bio::Location::Split;
+use Bio::Seq;
+use Bio::SeqIO;
+use Bio::SimpleAlign;
+use Bio::Tools::Genscan;
+
+use constant TDATE => uc( strftime "%d-%b-%Y", localtime );
 
 # Blast
 use constant QUERY_ID     => 0;
@@ -167,79 +164,83 @@ my %DIVISION = (
     'Bacteria'      => "BCT",
 );
 
-if (@ARGV == 0) {
-    pod2usage(-message => "\n\tNo arguments. See -help.\n");
+if ( @ARGV == 0 ) {
+    pod2usage( -message => "\n\tNo arguments. See -help.\n" );
     exit;
 }
 
 my $debug = 0;
 my %opt   = (
-    reindex          => 0,
-    debug            => 0,
-    reindex          => 0,
-    new              => 0,
-    cpus             => 0,
+    reindex  => 0,
+    debug    => 0,
+    reindex  => 0,
+    new      => 0,
+    cpus     => 0,
+    clipping => 1,
 );
 
-GetOptions(\%opt,
-    'trinity=s',
-    'reference=s',
-    'assignment=s',
-    'output-dir=s',
-    'output-file=s',
-    'reindex',
-    'scaffolding=s',
-    'contig-file=s',
-    'ortholog-file=s',
-    'ortholog=s',
-    'contig=s',
-    'read-index=s',
-    'debug',
-    'reindex',
-    'new',
-    'blast=s',
-    'ortholog-table=s',
-    'ortholog-cds=s',
-    'species-order=s',
-    'cpus=i',
-    'help',
-    'taxon-assemble=s',
-    'taxon-ortholog=s',
-    "genscan-matrix=s",
-    'predictions!',
-    'combineonly',
-    'tgicl=s'
+GetOptions(
+    \%opt,              'trinity=s',
+    'reference=s',      'assignment=s',
+    'output-dir=s',     'output-file=s',
+    'reindex',          'scaffolding=s',
+    'contig-file=s',    'ortholog-file=s',
+    'ortholog=s',       'contig=s',
+    'read-index=s',     'debug',
+    'reindex',          'new',
+    'blast=s',          'ortholog-table=s',
+    'ortholog-cds=s',   'species-order=s',
+    'cpus=i',           'help',
+    'taxon-assemble=s', 'taxon-ortholog=s',
+    "genscan-matrix=s", 'predictions!',
+    'combineonly',      'tgicl=s',
+    'clipping!'
 );
 
-pod2usage(-verbose => 2) if $opt{help};
+pod2usage( -verbose => 2 ) if $opt{help};
 
-$debug = 1 if ($opt{debug});
+$debug = 1 if ( $opt{debug} );
 
-if ($opt{combineonly} && $opt{"output-file"} && $opt{"output-dir"}) {
+if ( $opt{combineonly} && $opt{"output-file"} && $opt{"output-dir"} ) {
     &combine;
     exit;
 }
 
 # MANDATORY PARAMETER
 
-my @mandatory_parameter = ("assignment", "reference", "trinity", "blast", "read-index", "output-dir");
+my @mandatory_parameter =
+  ( "assignment", "reference", "trinity", "blast", "read-index", "output-dir" );
 for (@mandatory_parameter) {
-    if (not exists $opt{$_}) {
+    if ( not exists $opt{$_} ) {
         die "\nMissing parameter: $_\n\n";
     }
 }
 
 my @missing_files;
-push @missing_files, "Assignment table not found."                  unless (-e $opt{assignment});
-push @missing_files, "Reference transcriptome not found."           unless (-e $opt{reference});
-push @missing_files, "Trinity output not found."                    unless (-e $opt{trinity});
-push @missing_files, "Blast results for CDS annotation not found."  unless (-e $opt{blast});
-push @missing_files, "Hash containing path to readfiles not found." unless (-e $opt{'read-index'});
+
+push @missing_files, "Assignment table not found."
+  unless ( -e $opt{assignment} );
+
+push @missing_files, "Reference transcriptome not found."
+  unless ( -e $opt{reference} );
+
+push @missing_files, "Trinity output not found."
+  unless ( -e $opt{trinity} );
+
+push @missing_files, "Blast results for CDS annotation not found."
+  unless ( -e $opt{blast} );
+
+if ( $opt{'clipping'} ) {
+    push @missing_files, "Hash containing path to readfiles not found."
+      unless ( -e $opt{'read-index'} );
+}
 
 # OPTIONAL PARAMETER
-if (exists $opt{'ortholog-table'}) {
-    push @missing_files, "Ortholog table not found."                    unless (-e $opt{'ortholog-table'});
-    push @missing_files, "Ortholog CDS sequences not found."            unless (-e $opt{'ortholog-cds'});
+if ( exists $opt{'ortholog-table'} ) {
+    push @missing_files, "Ortholog table not found."
+      unless ( -e $opt{'ortholog-table'} );
+    push @missing_files, "Ortholog CDS sequences not found."
+      unless ( -e $opt{'ortholog-cds'} );
 }
 
 if (@missing_files) {
@@ -252,138 +253,167 @@ if (@missing_files) {
 
 # OPTIONAL PARAMETER
 
-unless ($opt{scaffolding}) {
+unless ( $opt{scaffolding} ) {
     print "Scaffolding disabled\n";
 } else {
-    push @missing_files, "Blast result for scaffolding not found." unless (-e $opt{scaffolding});
+    push @missing_files, "Blast result for scaffolding not found."
+      unless ( -e $opt{scaffolding} );
 }
 
-my @species_order = split ",", $opt{'species-order'} if ($opt{'species-order'});
+my @species_order = split ",", $opt{'species-order'}
+  if ( $opt{'species-order'} );
 
 my $quiet = 0;
 
 # TAXON OBJECTS
-my ($taxon, $taxon_id, $taxon_name, $division) = getTaxon($opt{'taxon-assemble'});
-my (undef, undef, $orth_taxon_name, undef) = getTaxon($opt{'taxon-ortholog'});
+my ( $taxon, $taxon_id, $taxon_name, $division ) =
+  getTaxon( $opt{'taxon-assemble'} );
+
+my ( undef, undef, $orth_taxon_name, undef ) =
+  getTaxon( $opt{'taxon-ortholog'} );
+
 $orth_taxon_name =~ s/\s/_/g;
 
 # READING/INDEXING INPUT FILES
-print "Reading reference genbank\n" if (!$quiet);
-my $db_orth = GenbankHelper::getIndex($opt{reference}, -reindex => $opt{reindex});
-die("\nError during indexing of: $opt{reference}\n\n") unless ($db_orth);
+print "Reading reference genbank\n" if ( !$quiet );
+my $db_orth =
+  GenbankHelper::getIndex( $opt{reference}, -reindex => $opt{reindex} );
+die("\nError during indexing of: $opt{reference}\n\n")
+  unless ($db_orth);
 
-print "Reading trinity contigs\n" if (!$quiet);
-my $db_trinity = Bio::DB::Fasta->new($opt{trinity}, -reindex => $opt{reindex});
-die("\nError during indexing of: $opt{trinity}\n\n") unless ($db_trinity);
+print "Reading trinity contigs\n" if ( !$quiet );
+my $db_trinity =
+  Bio::DB::Fasta->new( $opt{trinity}, -reindex => $opt{reindex} );
+die("\nError during indexing of: $opt{trinity}\n\n")
+  unless ($db_trinity);
 
-print "Reading blast result for CDS annotation\n" if (!$quiet);
-my $blast_all = getBlastHash($opt{blast});
-die("\nError reading blast results for CDS annotation.\n\n") unless ($blast_all);
+print "Reading blast result for CDS annotation\n" if ( !$quiet );
+my $blast_all = getBlastHash( $opt{blast} );
+die("\nError reading blast results for CDS annotation.\n\n")
+  unless ($blast_all);
 
-print "Reading blast result for scaffolding fragments\n" if (!$quiet);
-my $blast = getScaffoldFragments($opt{scaffolding});
-die("\nError reading blast results for scaffolding.\n\n") unless (!$quiet);
+print "Reading blast result for scaffolding fragments\n" if ( !$quiet );
+my $blast = getScaffoldFragments( $opt{scaffolding} );
+die("\nError reading blast results for scaffolding.\n\n") unless ( !$quiet );
 
-my ($ortholog_table, $taxon_names);
+my ( $ortholog_table, $taxon_names );
 my $ortholog_table_db;
-if (exists $opt{'ortholog-table'}) {
-    print "Reading ortholog table\n" if (!$quiet);
-    ($ortholog_table, $taxon_names) = indexTable($opt{'ortholog-table'});
-    die("\nError reading ortholog table.\n\n") unless ($ortholog_table && $taxon_names);
+if ( exists $opt{'ortholog-table'} ) {
+    print "Reading ortholog table\n" if ( !$quiet );
+    ( $ortholog_table, $taxon_names ) = indexTable( $opt{'ortholog-table'} );
+    die("\nError reading ortholog table.\n\n")
+      unless ( $ortholog_table && $taxon_names );
 
-    print "Indexing ortholog CDS fasta\n" if (!$quiet);
-    $ortholog_table_db = Bio::DB::Fasta->new($opt{'ortholog-cds'}, -reindex => $opt{reindex});
-    die("\nError reading ortholog table.\n\n") unless ($ortholog_table_db);
+    print "Indexing ortholog CDS fasta\n" if ( !$quiet );
+    $ortholog_table_db =
+      Bio::DB::Fasta->new( $opt{'ortholog-cds'}, -reindex => $opt{reindex} );
+    die("\nError reading ortholog table.\n\n") 
+      unless ($ortholog_table_db);
 }
 
-print "Retrieving hash: component => readfile\n" if (!$quiet);
 my $component2readfile;
-eval { $component2readfile = retrieve $opt{'read-index'}; };
-if ($@) { die "\nCould not retrieve read file hash. Rebuild!\n\n"; }
+if ( $opt{'clipping'} ) {
+    print "Retrieving hash: component => readfile\n" if ( !$quiet );
+    eval { $component2readfile = retrieve $opt{'read-index'}; };
+    if ($@) { die "\nCould not retrieve read file hash. Rebuild!\n\n"; }
+}
 
 my $tgicl;
-if (exists $opt{'tgicl'}) {
-    print "Indexing cluster members (TGICL)\n" if (!$quiet);
-    $tgicl = indexTGICL($opt{'tgicl'});
+if ( exists $opt{'tgicl'} ) {
+    print "Indexing cluster members (TGICL)\n" if ( !$quiet );
+    $tgicl = indexTGICL( $opt{'tgicl'} );
 }
 
 # SUBSET OF ORTHOLOGS/TRANSCRIPTS ONLY
 
 # provided by argument
-my %contigs_only   = map { $_ => 1 } split ",", $opt{contig}   if ($opt{contig});
-my %orthologs_only = map { $_ => 1 } split ",", $opt{ortholog} if ($opt{ortholog});
+my %contigs_only = map { $_ => 1 } split ",", $opt{contig} 
+  if ( $opt{contig} );
+
+my %orthologs_only = map { $_ => 1 } split ",", $opt{ortholog}
+  if ( $opt{ortholog} );
 
 # provided by file
-if ($opt{"contig-file"} && -e $opt{'contig-file'}) {
-    print "Reading target contigs\n" if (!$quiet);
+if ( $opt{"contig-file"} && -e $opt{'contig-file'} ) {
+    print "Reading target contigs\n" if ( !$quiet );
     open my $fh, "<", $opt{"contig-file"} or die $!;
     while (<$fh>) { chomp; $contigs_only{$_} = 1; }
     close $fh;
 }
-if ($opt{"ortholog-file"} && -e $opt{'ortholog-file'}) {
-    print "Reading target orthologs\n" if (!$quiet);
+if ( $opt{"ortholog-file"} && -e $opt{'ortholog-file'} ) {
+    print "Reading target orthologs\n" if ( !$quiet );
     open my $fh, "<", $opt{"ortholog-file"} or die $!;
-    while(<$fh>) { chomp; $orthologs_only{$_} = 1; }
+    while (<$fh>) { chomp; $orthologs_only{$_} = 1; }
     close $fh;
 }
 
 print "Starting...\n";
 
 # RUN EACH ASSIGNMENT IN PARALLEL
-my $pm = Parallel::ForkManager->new($opt{cpus});
+my $pm = Parallel::ForkManager->new( $opt{cpus} );
 
 # START
-my $t0 = Benchmark->new();
+my $t0    = Benchmark->new();
 my $count = 0;
 open FH, "<", $opt{assignment} or die $!;
-while (defined(my $line = <FH>)) {
-    next if ($line =~ /^#/);
+while ( defined( my $line = <FH> ) ) {
+    next if ( $line =~ /^#/ );
 
     my @e = split "\t", $line;
 
-    unless (@e >= 4) {
+    unless ( @e >= 4 ) {
         print STDERR "ERROR: $opt{assignment}: line $. invalid. Skipping.\n";
         next;
     }
 
-    next if (%contigs_only   && not exists $contigs_only{$e[TRIN_ID]});
-    next if (%orthologs_only && not exists $orthologs_only{$e[ORTH_ID]});
+    next if ( %contigs_only   && not exists $contigs_only{ $e[TRIN_ID] } );
+    next if ( %orthologs_only && not exists $orthologs_only{ $e[ORTH_ID] } );
 
     $count++;
 
     $pm->start and next;
-    process(($e[TRIN_ID], $e[ORTH_ID], $e[STRAND], $e[HIT_TYPE], $e[STARTS], $e[ENDS]));
+    process(
+        (
+            $e[TRIN_ID],  $e[ORTH_ID], $e[STRAND],
+            $e[HIT_TYPE], $e[STARTS],  $e[ENDS]
+        )
+    );
     $pm->finish;
 }
 close FH;
 $pm->wait_all_children;
 my $t1 = Benchmark->new();
 
-print "Processing $count transcripts took  " . timestr(timediff($t1, $t0))."\n";
+print "Processing $count transcripts took  "
+  . timestr( timediff( $t1, $t0 ) ) . "\n";
+
 &combine;
 
 sub combine {
-# COMBINE RESULTS TO SINGLE GENBANK
-    if ($opt{'output-file'}) {
-        remove_tree($opt{'output-file'}) if (-e $opt{'output-file'});
+
+    # COMBINE RESULTS TO SINGLE GENBANK
+    if ( $opt{'output-file'} ) {
+        remove_tree( $opt{'output-file'} ) if ( -e $opt{'output-file'} );
         $t0 = Benchmark->new();
         print "Combining results...\n" if ($debug);
-        my @command = ("$FindBin::Bin/combine_fast.sh", $opt{'output-dir'}, "_final.gbk", $opt{'output-file'}, "&> /dev/null");
-        system(join " ", @command);
+        my @command = (
+            "$FindBin::Bin/combine_fast.sh",
+            $opt{'output-dir'}, "_final.gbk", $opt{'output-file'},
+            "&> /dev/null"
+        );
+        system( join " ", @command );
         $t1 = Benchmark->new();
-        print "Combining files took " . timestr(timediff($t1, $t0))."\n";
+        print "Combining files took " . timestr( timediff( $t1, $t0 ) ) . "\n";
     }
 }
 
-
 sub process {
-    my ($trin_id, $orth_id, $strand, $hit_type) = @_;
+    my ( $trin_id, $orth_id, $strand, $hit_type ) = @_;
 
     my $t0 = Benchmark->new();
     print "Processing: $trin_id [$orth_id,$hit_type]..\n" if ($debug);
 
-    my ($type, $fusion) = map {uc} split ",", $hit_type;
-
+    my ( $type, $fusion ) = map { uc } split ",", $hit_type;
 
     my %obj = (
         contig_id      => $trin_id,
@@ -400,44 +430,68 @@ sub process {
 
     # get contig
     my $db_contig_seq = $db_trinity->get_Seq_by_acc($trin_id);
-    if (!(defined $db_contig_seq && ref $db_contig_seq eq "Bio::PrimarySeq::Fasta")) {
-        print STDERR "ERROR: Contig not found in database! Skipping: " . $trin_id . " [$orth_id]\n";
+    if (
+        !(
+            defined $db_contig_seq
+            && ref $db_contig_seq eq "Bio::PrimarySeq::Fasta"
+        )
+      )
+    {
+        print STDERR "ERROR: Contig not found in database! Skipping: "
+          . $trin_id
+          . " [$orth_id]\n";
         return;
     }
 
     # get ortholog
     # MSG: Unrecognized DBSOURCE data: BioProject: PRJNA175699 ...
     $obj{orth_seq} = $db_orth->get_Seq_by_acc($orth_id);
-    unless (!(defined $obj{orth_seq} && ref $obj{orth_seq} eq "Bio::PrimarySeq::Fasta")) {
-        print STDERR "ERROR: Transcript not found in database! Skipping: " . $trin_id . " [$orth_id]\n";
+    unless (
+        !(
+            defined $obj{orth_seq}
+            && ref $obj{orth_seq} eq "Bio::PrimarySeq::Fasta"
+        )
+      )
+    {
+        print STDERR "ERROR: Transcript not found in database! Skipping: "
+          . $trin_id
+          . " [$orth_id]\n";
         return;
     }
 
     # get symbol
     my ($orth_gene_feature) = $obj{orth_seq}->get_SeqFeatures('gene');
-    ($obj{orth_sym}) = $orth_gene_feature->get_tag_values('gene') if ($orth_gene_feature);
+    ( $obj{orth_sym} ) = $orth_gene_feature->get_tag_values('gene')
+      if ($orth_gene_feature);
 
-    unless (defined $obj{orth_sym}) {
+    unless ( defined $obj{orth_sym} ) {
         $obj{orth_sym} = "NOT_DEFINED";
         print STDERR "ERROR: Transcript has no gene-symbol assigned.\n";
     }
 
     # transcript folder
-    $obj{transcript_dir} = getTranscriptDir($obj{orth_seq});
-    createTranscriptDir($obj{transcript_dir});
+    $obj{transcript_dir} = getTranscriptDir( $obj{orth_seq} );
+    createTranscriptDir( $obj{transcript_dir} );
 
     # fasta file with ortholog
-    $obj{orth_file} = catfile($obj{transcript_dir}, "ortholog.fa"); 
-    my $io = Bio::SeqIO->new(-file => ">" . $obj{orth_file}, -format => "fasta");
-    $io->write_seq($obj{orth_seq});
+    $obj{orth_file} = catfile( $obj{transcript_dir}, "ortholog.fa" );
+    my $io =
+      Bio::SeqIO->new( -file => ">" . $obj{orth_file}, -format => "fasta" );
+    $io->write_seq( $obj{orth_seq} );
 
     # orientated! "clone" of contig
-    if ($strand eq "-1") {
+    if ( $strand eq "-1" ) {
         my $db_contig_seq = $db_contig_seq->revcom;
-        $obj{contig_seq} = Bio::Seq->new(-seq => $db_contig_seq->seq, -id => $db_contig_seq->id);
+        $obj{contig_seq} = Bio::Seq->new(
+            -seq => $db_contig_seq->seq,
+            -id  => $db_contig_seq->id
+        );
         $obj{revcom} = 1;
     } else {
-        $obj{contig_seq} = Bio::Seq->new(-seq => $db_contig_seq->seq, -id => $db_contig_seq->id);
+        $obj{contig_seq} = Bio::Seq->new(
+            -seq => $db_contig_seq->seq,
+            -id  => $db_contig_seq->id
+        );
     }
 
     # collect all features
@@ -445,35 +499,46 @@ sub process {
 
     # SCAFFOLDING
     if ($blast) {
-        if ($blast->{$obj{orth_id}}) {
+        if ( $blast->{ $obj{orth_id} } ) {
 
-            my ($scaffold_seq, $scaffold_features, $fragment_ids) = performScaffolding(\%obj);
+            my ( $scaffold_seq, $scaffold_features, $fragment_ids ) =
+              performScaffolding( \%obj );
 
-            if (defined $scaffold_seq && defined $scaffold_features) {
+            if ( defined $scaffold_seq && defined $scaffold_features ) {
                 $obj{fragments}  = $fragment_ids;
                 $obj{contig_seq} = Bio::Seq->new(
                     -id  => $obj{contig_id},
                     -seq => $scaffold_seq->seq
                 );
-                push @{$features{misc_feature}}, @{$scaffold_features};
+                push @{ $features{misc_feature} }, @{$scaffold_features};
             }
         }
     }
 
     # WRITE CONTIG
-    $io = Bio::SeqIO->new(-file => ">" . catfile($obj{transcript_dir}, "contig.fa"), -format => "fasta");
-    $io->write_seq($obj{contig_seq});
+    $io = Bio::SeqIO->new(
+        -file   => ">" . catfile( $obj{transcript_dir}, "contig.fa" ),
+        -format => "fasta"
+    );
+    $io->write_seq( $obj{contig_seq} );
 
     # GENSCAN
-    $obj{genscan_file} = catfile($obj{transcript_dir}, "CDS_genscan.txt");
-    unless (-e $obj{genscan_file}) {
-        my @command = ("genscan", $opt{'genscan-matrix'},
-            catfile($obj{transcript_dir}, "contig.fa"),
-            ">", $obj{genscan_file}, "2>", "$obj{genscan_file}.err"
+    $obj{genscan_file} = catfile( $obj{transcript_dir}, "CDS_genscan.txt" );
+    unless ( -e $obj{genscan_file} ) {
+        my @command = (
+            "genscan",
+            $opt{'genscan-matrix'},
+            catfile( $obj{transcript_dir}, "contig.fa" ),
+            ">",
+            $obj{genscan_file},
+            "2>",
+            "$obj{genscan_file}.err"
         );
-        my $failed = system(join " ", @command);
+        my $failed = system( join " ", @command );
         if ($failed) {
-            print STDERR "ERROR: Genscan failed: " . $obj{contig_seq}->id . " [$obj{orth_id}]. Skipping assignment.\n";
+            print STDERR "ERROR: Genscan failed: "
+              . $obj{contig_seq}->id
+              . " [$obj{orth_id}]. Skipping assignment.\n";
             print STDERR join " ", @command;
             print STDERR "\n";
             return;
@@ -481,37 +546,44 @@ sub process {
     }
 
     # CDS PREDICTION
-    my ($cds_feature, @seleno_features) = performCDSprediction(\%obj);
+    my ( $cds_feature, @seleno_features ) = performCDSprediction( \%obj );
 
-    if (defined $cds_feature) {
+    if ( defined $cds_feature ) {
         $features{CDS}  = $cds_feature;
         $obj{cds_start} = $cds_feature->start;
         $obj{cds_end}   = $cds_feature->end;
-        push @{$features{misc_feature}}, @seleno_features if (@seleno_features);
+        push @{ $features{misc_feature} }, @seleno_features
+          if (@seleno_features);
     } else {
-        print STDERR "ERROR: No CDS predicted. Skipping: " . $obj{contig_seq}->id . " [" . $obj{orth_id} . "]\n";
+        print STDERR "ERROR: No CDS predicted. Skipping: "
+          . $obj{contig_seq}->id . " ["
+          . $obj{orth_id} . "]\n";
         return;
     }
 
     # mRNA CLIPPING
     my $clipped = "clipped:0";
-    my ($start, $stop) = (1, $obj{contig_seq}->length);
-    my ($gene, $clippedB, $promoter, $polyA_signal, $polyA_site) = performClipping(\%obj);
-    if ($gene) {
+    my ( $start, $stop ) = ( 1, $obj{contig_seq}->length );
+    my $promoter = undef;
+    if ( $opt{'clipping'} ) {
+        my ( $gene, $clippedB, $promoter, $polyA_signal, $polyA_site ) =
+          performClipping( \%obj );
+        if ($gene) {
 
-        ($start, $stop) = ($gene->[0], $gene->[1]);
-        
-        # trust CDS prediction and drop 5' clipping prediction 
-        if ($start > $cds_feature->start) {
-            $start = 1;
-            $promoter = undef;
+            ( $start, $stop ) = ( $gene->[0], $gene->[1] );
+
+            # trust CDS prediction and drop 5' clipping prediction
+            if ( $start > $cds_feature->start ) {
+                $start    = 1;
+                $promoter = undef;
+            }
+
+            if ( $start == 1 && $obj{"contig_seq"}->length == $stop ) {
+                $clippedB = 0;
+            }
+
+            $clipped = "clipped:1" if ($clippedB);
         }
-
-        if ($start == 1 && $obj{"contig_seq"}->length == $stop) {
-            $clippedB = 0;
-        }
-
-        $clipped = "clipped:1" if ($clippedB);
     }
 
     # Feature: SOURCE
@@ -532,19 +604,20 @@ sub process {
         -primary_tag => "promoter",
         -start       => $promoter->[0],
         -end         => $promoter->[1],
-        -tag         => {gene => $obj{orth_sym}, note => "genscan"}
-    ) if ($promoter);
+        -tag         => { gene => $obj{orth_sym}, note => "genscan" }
+    ) if ( defined $promoter );
 
     # Feature: GENE
-    if (ref $features{CDS}->location eq "Bio::Location::Split") {
+    if ( ref $features{CDS}->location eq "Bio::Location::Split" ) {
         my $tmp_split_location = Bio::Location::Split->new();
 
         my @sub_locations =
-          sort { $a->start <=> $b->start } $features{CDS}->location->sub_Location();
+          sort { $a->start <=> $b->start }
+          $features{CDS}->location->sub_Location();
 
         # adjust CDS first and last exons start and end coordinates, respectively
-        my $first_exon = (shift @sub_locations)->clone;
-        my $last_exon  = (pop @sub_locations)->clone;
+        my $first_exon = ( shift @sub_locations )->clone;
+        my $last_exon  = ( pop @sub_locations )->clone;
 
         $first_exon->start($start);
         $last_exon->end($stop);
@@ -556,7 +629,7 @@ sub process {
         $features{mRNA} = Bio::SeqFeature::Generic->new(
             -primary_tag => "mRNA",
             -location    => $tmp_split_location,
-            -tag         => {gene => $obj{orth_sym}, note => $clipped}
+            -tag         => { gene => $obj{orth_sym}, note => $clipped }
         );
 
     } else {
@@ -564,7 +637,7 @@ sub process {
             -primary_tag => "mRNA",
             -start       => $start,
             -end         => $stop,
-            -tag         => {gene => $obj{orth_sym}, note => $clipped}
+            -tag         => { gene => $obj{orth_sym}, note => $clipped }
         );
     }
 
@@ -576,7 +649,8 @@ sub process {
     #
     # Example:
     #   DEFINITION  Heterocephalus glaber (BHMT) mRNA
-    my $description = "$taxon_name ($obj{orth_sym}) " . $obj{orth_seq}->molecule;
+    my $description =
+      "$taxon_name ($obj{orth_sym}) " . $obj{orth_seq}->molecule;
 
     my $annotated_contig = Bio::Seq::RichSeq->new(
         -seq              => $obj{contig_seq}->seq,
@@ -594,8 +668,8 @@ sub process {
     for (ORDER_FEATURES) {
         my $value = $features{$_};
         if ($value) {
-            if (ref $value eq "ARRAY") {
-                for my $f (@{$features{$_}}) {
+            if ( ref $value eq "ARRAY" ) {
+                for my $f ( @{ $features{$_} } ) {
                     $annotated_contig->add_SeqFeature($f);
                 }
             } else {
@@ -606,31 +680,32 @@ sub process {
 
     print "Writing GenBank\n" if ($debug);
     $io = Bio::SeqIO->new(
-        -file   => ">" . catfile($obj{transcript_dir}, "_final.gbk"),
+        -file   => ">" . catfile( $obj{transcript_dir}, "_final.gbk" ),
         -format => "GenBank"
     );
     $io->write_seq($annotated_contig);
 
     my $te = Benchmark->new();
-    print "$obj{contig_id}\t$obj{orth_id}\t$obj{orth_sym}\t" . timestr(timediff($te, $t0)) . "\n";
+    print "$obj{contig_id}\t$obj{orth_id}\t$obj{orth_sym}\t"
+      . timestr( timediff( $te, $t0 ) ) . "\n";
 }
 
 sub indexTGICL {
     my ($file) = @_;
 
     my %tgicl;
-    if (-e $file) {
+    if ( -e $file ) {
         open my $fh, "<", $file or die "Can't open file for reading: $file\n";
-        while(<$fh>) {
+        while (<$fh>) {
             chomp;
             if (/^CL(\d+)Contig(\d+)/) {
                 my @elements = split "\t", $_;
                 my $clusterid = shift @elements;
                 my %components;
                 for (@elements) {
-                    $components{$1} = 1 if (/^(.+?)[\._]/); 
+                    $components{$1} = 1 if (/^(.+?)[\._]/);
                 }
-                $tgicl{$clusterid} = [keys %components];
+                $tgicl{$clusterid} = [ keys %components ];
             }
         }
         close $fh;
@@ -643,19 +718,21 @@ sub getReadFiles {
 
     my %components;
     for my $frag_id (@ids) {
-        if ($frag_id =~ /^(.+?)[\._]/) {
+        if ( $frag_id =~ /^(.+?)[\._]/ ) {
+
             # Example: c121735.graph_c0_seq1
             $components{$1} = 1;
-        } elsif (defined $tgicl && $frag_id =~ /^CL(\d+)Contig(\d+)/) {
+        } elsif ( defined $tgicl && $frag_id =~ /^CL(\d+)Contig(\d+)/ ) {
+
             # TGICL Clusters
-            for my $member (@{$tgicl->{$frag_id}}) {
+            for my $member ( @{ $tgicl->{$frag_id} } ) {
                 $components{$member} = 1;
             }
         }
     }
 
     my @readfiles;
-    for (keys %components) {
+    for ( keys %components ) {
         my $readfile = $component2readfile->{$_};
         unless ($readfile) {
             print STDERR "ERROR: Readfile not found for component: $_\n";
@@ -673,22 +750,22 @@ sub getTranscriptDir {
     # get symbol
     my ($orth_gene_feature) = $orth_seq->get_SeqFeatures('gene');
     my ($orth_sym)          = $orth_gene_feature->get_tag_values('gene');
-    if ($orth_sym =~ /(.+?)\s+/) {
+    if ( $orth_sym =~ /(.+?)\s+/ ) {
         $orth_sym = $1;
     }
 
-    return catdir($opt{'output-dir'}, $orth_sym . "_" . $orth_seq->id);
+    return catdir( $opt{'output-dir'}, $orth_sym . "_" . $orth_seq->id );
 }
 
 sub createTranscriptDir {
     my ($transcript_dir) = @_;
 
     print "Output path: $transcript_dir\n" if ($debug);
-    if (-d $transcript_dir && $opt{new}) {
+    if ( -d $transcript_dir && $opt{new} ) {
         print "Removing previously computed results\n" if ($debug);
         remove_tree($transcript_dir);
         make_path($transcript_dir);
-    } elsif (!-d $transcript_dir) {
+    } elsif ( !-d $transcript_dir ) {
         make_path($transcript_dir);
     }
 
@@ -698,27 +775,29 @@ sub createTranscriptDir {
 sub performClipping {
     my ($obj) = @_;
 
-    my $cds_file       = catfile($obj->{transcript_dir}, "3UTR_known_CDS.csv");
-    my $blast_file     = catfile($obj->{transcript_dir}, "3UTR_blast.csv");
-    my $output_genscan = catfile($obj->{transcript_dir}, "3UTR_annotation.csv");
-    my $output_clip    = catfile($obj->{transcript_dir}, "3UTR_sumscore.txt");
+    my $cds_file   = catfile( $obj->{transcript_dir}, "3UTR_known_CDS.csv" );
+    my $blast_file = catfile( $obj->{transcript_dir}, "3UTR_blast.csv" );
+    my $output_genscan =
+      catfile( $obj->{transcript_dir}, "3UTR_annotation.csv" );
+    my $output_clip = catfile( $obj->{transcript_dir}, "3UTR_sumscore.txt" );
 
-    my $orth_file   = catfile($obj->{transcript_dir}, "3UTR_ortholog.fa");
-    my $contig_file = catfile($obj->{transcript_dir}, "3UTR_contig.fa");
+    my $orth_file   = catfile( $obj->{transcript_dir}, "3UTR_ortholog.fa" );
+    my $contig_file = catfile( $obj->{transcript_dir}, "3UTR_contig.fa" );
 
     # assign symbols to CDS regions (genscan_annotation.pl)
-    if (!-e $output_genscan) {
+    if ( !-e $output_genscan ) {
         print "Annotated genscan predictions..\n" if ($debug);
 
         # prepare CDS annotation table
         open my $fh, ">", $cds_file or die $!;
-        print $fh join "\t", $obj->{cds_start}, $obj->{cds_end}, 1, $obj->{orth_sym}, $obj->{orth_id};
+        print $fh join "\t", $obj->{cds_start}, $obj->{cds_end}, 1,
+          $obj->{orth_sym}, $obj->{orth_id};
         print $fh "\n";
         close $fh;
 
         # prepare hit table
         open $fh, ">", $blast_file or die $!;
-        for (@{$blast_all->{$obj->{contig_id}}}) {
+        for ( @{ $blast_all->{ $obj->{contig_id} } } ) {
             print $fh join "\t", @$_;
             print $fh "\n";
         }
@@ -729,20 +808,24 @@ sub performClipping {
             "$^X $FindBin::Bin/genscan_annotation.pl",
             "-cds $cds_file",
             "-hits $blast_file",
-            "-genscan", $obj->{genscan_file},
+            "-genscan",
+            $obj->{genscan_file},
             "> $output_genscan"
         );
 
         # RUN
-        my $failed = system(join " ", @command);
+        my $failed = system( join " ", @command );
         if ($failed) {
-            print STDERR "ERROR: genscan_annotate.pl failed. Ignoring further CDS regions if any. [".$obj->{contig_id}.",",.$obj->{orth_sym}."]\n";
+            print STDERR
+              "ERROR: genscan_annotate.pl failed. Ignoring further CDS regions if any. ["
+              . $obj->{contig_id} . ",",
+              . $obj->{orth_sym} . "]\n";
         }
         remove_tree($cds_file);
     }
 
     # calculate clipping positions for each CDS region
-    if (!-e $output_clip) {
+    if ( !-e $output_clip ) {
         print "3 UTR clipping..\n" if ($debug);
 
         # get accessions of orthologous transcripts
@@ -750,28 +833,32 @@ sub performClipping {
         open my $fh, "<", $output_genscan or die $!;
         while (<$fh>) {
             next if (/^#/);
-            (undef, undef, my $transcript) = split;
+            ( undef, undef, my $transcript ) = split;
             push @transcripts, $transcript;
         }
         close $fh;
 
         # prepare fasta with sequences of orthologs
-        my $io = Bio::SeqIO->new(-file => ">" . $orth_file, -format => "fasta");
+        my $io =
+          Bio::SeqIO->new( -file => ">" . $orth_file, -format => "fasta" );
         for (@transcripts) {
-            next if ($_ eq "UNKNOWN");
+            next if ( $_ eq "UNKNOWN" );
             my $tmp_orth_seq = $db_orth->get_Seq_by_acc($_);
             $io->write_seq($tmp_orth_seq) if ($tmp_orth_seq);
             die "Accession not found in database: $_\n" unless ($tmp_orth_seq);
         }
 
         # fasta with contig
-        $io = Bio::SeqIO->new(-file => ">" . $contig_file, -format => "fasta");
-        $io->write_seq($obj->{contig_seq});
+        $io =
+          Bio::SeqIO->new( -file => ">" . $contig_file, -format => "fasta" );
+        $io->write_seq( $obj->{contig_seq} );
 
         # get reads from scaffolding fragments
-        my $readfiles = getReadFiles($obj->{contig_id}, @{$obj->{fragments}});
+        my $readfiles =
+          getReadFiles( $obj->{contig_id}, @{ $obj->{fragments} } );
         unless ($readfiles) {
-            print STDERR "ERROR: No read file found: " . $obj->{contig_id} . "\n";
+            print STDERR "ERROR: No read file found: "
+              . $obj->{contig_id} . "\n";
             return;
         }
 
@@ -782,15 +869,17 @@ sub performClipping {
             "-ortholog $orth_file",
             "-input $output_genscan",
             "-readfile $readfiles",
-            "-utr-length ", UTR_LENGTH,
-            "-output_dir", catdir($obj->{transcript_dir}, "3UTR"),
+            "-utr-length ",
+            UTR_LENGTH,
+            "-output_dir",
+            catdir( $obj->{transcript_dir}, "3UTR" ),
             "-output $output_clip",
             "-prefix 3UTR"
         );
         push @command, "-debug" if ($debug);
         push @command, "> $output_clip";
 
-        my $failed = system(join " ", @command);
+        my $failed = system( join " ", @command );
         if ($failed) {
             print STDERR "ERROR: mRNA clipping failed.\n";
             return;
@@ -800,39 +889,41 @@ sub performClipping {
     }
 
     # PARSE OUTPUT
-    my ($gene, $promotor, $clipped);
+    my ( $gene, $promotor, $clipped );
     open my $fh, "<", $output_clip or die $!;
     while (<$fh>) {
         next if (/^#/);
         my @e = split;
-        next unless (@e == 12);
-        if ($e[10] eq $obj->{orth_id}) {
-            $gene = [$e[8], $e[9]];
-            $clipped = 1 if ($e[8] > 1 || $e[9] < $obj->{contig_seq}->length);
-            if ($e[4] != -1 && $e[4] ne "inf") {
-                $promotor = [$e[4], $e[5]];
+        next unless ( @e == 12 );
+        if ( $e[10] eq $obj->{orth_id} ) {
+            $gene = [ $e[8], $e[9] ];
+            $clipped = 1 if ( $e[8] > 1 || $e[9] < $obj->{contig_seq}->length );
+            if ( $e[4] != -1 && $e[4] ne "inf" ) {
+                $promotor = [ $e[4], $e[5] ];
             }
         }
     }
     close $fh;
 
-    return ($gene, $clipped, $promotor);
+    return ( $gene, $clipped, $promotor );
 }
 
 sub performCDSprediction {
     my ($obj) = @_;
 
-    my $out_aln_file = catfile($obj->{transcript_dir}, "CDS_alignment.aln");
-    my $out_txt_file = catfile($obj->{transcript_dir}, "CDS_result.txt");
+    my $out_aln_file = catfile( $obj->{transcript_dir}, "CDS_alignment.aln" );
+    my $out_txt_file = catfile( $obj->{transcript_dir}, "CDS_result.txt" );
     my $out_genscan_file = $obj->{genscan_file};
 
-    if (-e $out_aln_file && -e $out_txt_file) {
+    if ( -e $out_aln_file && -e $out_txt_file ) {
         print "CDS prediction already performed. Skipping.\n" if ($debug);
     } else {
         print "CDS prediction..\n" if ($debug);
 
-        my $ortholog_file = catfile($obj->{transcript_dir}, "CDS_ortholog_cds.fa");
-        my $io            = Bio::SeqIO->new(-file => ">" . $ortholog_file, -format => "fasta");
+        my $ortholog_file =
+          catfile( $obj->{transcript_dir}, "CDS_ortholog_cds.fa" );
+        my $io =
+          Bio::SeqIO->new( -file => ">" . $ortholog_file, -format => "fasta" );
 
         # adding full length ortholog (better 5' alignments)
         $io->write_seq(
@@ -842,51 +933,72 @@ sub performCDSprediction {
             )
         );
 
-        my $orthologs     = $ortholog_table->{$obj->{orth_id}} if (defined $ortholog_table);
+        my $orthologs = $ortholog_table->{ $obj->{orth_id} }
+          if ( defined $ortholog_table );
         if ($orthologs) {
+
             # fasta with CDS of orthologs
-            for (my $i = 0; $i < @$orthologs; $i++) {
-                next if ($orthologs->[$i] eq "NA");
-                my $seq = $ortholog_table_db->get_Seq_by_acc($orthologs->[$i]);
+            for ( my $i = 0; $i < @$orthologs; $i++ ) {
+                next if ( $orthologs->[$i] eq "NA" );
+                my $seq =
+                  $ortholog_table_db->get_Seq_by_acc( $orthologs->[$i] );
                 unless ($seq) {
-                    print STDERR "Sequence not found: ". $orthologs->[$i] .". Ortholog of ".$obj->{orth_id}."\n";
+                    print STDERR "Sequence not found: "
+                      . $orthologs->[$i]
+                      . ". Ortholog of "
+                      . $obj->{orth_id} . "\n";
                     next;
                 }
 
-                my $last_codon = uc(substr $seq->seq, -3);
-                my $termination = ($last_codon eq "TAG" || $last_codon eq "TAA" || $last_codon eq "TGA");
-                
-                $io->write_seq( Bio::Seq->new( 
+                my $last_codon = uc( substr $seq->seq, -3 );
+                my $termination =
+                  (      $last_codon eq "TAG"
+                      || $last_codon eq "TAA"
+                      || $last_codon eq "TGA" );
+
+                $io->write_seq(
+                    Bio::Seq->new(
                         -id  => "cds:" . $taxon_names->[$i] . ":" . $seq->id,
-                        -seq => $termination ? substr $seq->seq, 0, -3 : $seq->seq 
+                        -seq => $termination
+                        ? substr $seq->seq,
+                        0, -3
+                        : $seq->seq
                     )
                 );
             }
         } else {
-            print "Using assigned ortholog for CDS prediction only\n" if ($debug);
+            print "Using assigned ortholog for CDS prediction only\n"
+              if ($debug);
             my ($cds_feature) = $obj->{orth_seq}->get_SeqFeatures("CDS");
-            my $last_codon = uc(substr $cds_feature->spliced_seq->seq, -3);
-            my $termination = ($last_codon eq "TAG" || $last_codon eq "TAA" || $last_codon eq "TGA");
+            my $last_codon = uc( substr $cds_feature->spliced_seq->seq, -3 );
+            my $termination =
+              (      $last_codon eq "TAG"
+                  || $last_codon eq "TAA"
+                  || $last_codon eq "TGA" );
 
             $io->write_seq(
                 Bio::Seq->new(
-                    -id => "cds:" . $orth_taxon_name .":" . $obj->{orth_id},
-                    -seq => $termination ? substr $cds_feature->spliced_seq->seq, 0, -3 : $cds_feature->spliced_seq->seq
+                    -id  => "cds:" . $orth_taxon_name . ":" . $obj->{orth_id},
+                    -seq => $termination
+                    ? substr $cds_feature->spliced_seq->seq,
+                    0, -3
+                    : $cds_feature->spliced_seq->seq
                 )
             );
         }
 
         # contig file
-        my $contig_file = catfile($obj->{transcript_dir}, "CDS_contig.fa");
-        $io = Bio::SeqIO->new(-file => ">" . $contig_file, -format => 'fasta');
-        $io->write_seq($obj->{contig_seq});
+        my $contig_file = catfile( $obj->{transcript_dir}, "CDS_contig.fa" );
+        $io =
+          Bio::SeqIO->new( -file => ">" . $contig_file, -format => 'fasta' );
+        $io->write_seq( $obj->{contig_seq} );
 
         # get number of selenocysteines
         my $selenopos = 0;
-        for ($obj->{orth_seq}->get_SeqFeatures('misc_feature')) {
-            if ($_->has_tag('note')) {
-                for my $note ($_->get_tag_values('note')) {
-                    $selenopos++ if ($note =~ /Selenocysteine/);
+        for ( $obj->{orth_seq}->get_SeqFeatures('misc_feature') ) {
+            if ( $_->has_tag('note') ) {
+                for my $note ( $_->get_tag_values('note') ) {
+                    $selenopos++ if ( $note =~ /Selenocysteine/ );
                 }
             }
         }
@@ -898,39 +1010,53 @@ sub performCDSprediction {
             "-out-genscan $out_genscan_file",   "-unaligned",
             "-msa",                             $ortholog_file,
             "-msa-format",                      "fasta",
-            "-genscan-matrix", $opt{'genscan-matrix'}
+            "-genscan-matrix",                  $opt{'genscan-matrix'}
         );
         push @command, "-predictions" if ( $opt{'predictions'} );
 
         push @command, "> $out_txt_file 2> $out_txt_file.err";
-        print STDERR (join " ", @command) if ($debug);
-        my $failed = system((join " ", @command));
+        print STDERR ( join " ", @command ) if ($debug);
+        my $failed = system( ( join " ", @command ) );
         if ($failed) {
-            print STDERR "ERROR: CDS prediction failed! [" . $obj->{contig_id} . "; " . $obj->{orth_id} . "; ". $obj->{orth_sym} . "]\n";
+            print STDERR "ERROR: CDS prediction failed! ["
+              . $obj->{contig_id} . "; "
+              . $obj->{orth_id} . "; "
+              . $obj->{orth_sym} . "]\n";
             print STDERR "$!";
             return undef;
         }
     }
 
-    unless (-e $out_txt_file) {
-        print STDERR "ERROR: CDS prediction failed! [" . $obj->{contig_id} . "; " . $obj->{orth_id} . "; ". $obj->{orth_sym} . "]\n";
+    unless ( -e $out_txt_file ) {
+        print STDERR "ERROR: CDS prediction failed! ["
+          . $obj->{contig_id} . "; "
+          . $obj->{orth_id} . "; "
+          . $obj->{orth_sym} . "]\n";
         return undef;
     }
 
     my @features = parseCDSpredict($out_txt_file);
 
     # add infered CDS to alignment
-    my $io        = Bio::AlignIO->new(-file => $out_aln_file, -format => "fasta");
-    my $aln       = $io->next_aln;
-    my $seq       = $aln->get_seq_by_id($obj->{contig_id});
-    my $left      = $seq->column_from_residue_number($features[0]->start);
-    my $right     = $seq->column_from_residue_number($features[0]->end);
-    my $cds_slice = $seq->subseq($left, $right);
+    my $io    = Bio::AlignIO->new( -file => $out_aln_file, -format => "fasta" );
+    my $aln   = $io->next_aln;
+    my $seq   = $aln->get_seq_by_id( $obj->{contig_id} );
+    my $left  = $seq->column_from_residue_number( $features[0]->start );
+    my $right = $seq->column_from_residue_number( $features[0]->end );
+    my $cds_slice = $seq->subseq( $left, $right );
 
-    my $new_cds_seq = ("-" x ($left - 1)) . $cds_slice . ("-" x ($aln->length - $right));
-    $aln->add_seq(Bio::LocatableSeq->new(-seq => $new_cds_seq, -id => "cds:" . $seq->id));
+    my $new_cds_seq =
+        ( "-" x ( $left - 1 ) )
+      . $cds_slice
+      . ( "-" x ( $aln->length - $right ) );
+    $aln->add_seq(
+        Bio::LocatableSeq->new(
+            -seq => $new_cds_seq,
+            -id  => "cds:" . $seq->id
+        )
+    );
 
-    $io = Bio::AlignIO->new(-file => ">" . $out_aln_file, -format => "fasta");
+    $io = Bio::AlignIO->new( -file => ">" . $out_aln_file, -format => "fasta" );
     $io->write_aln($aln);
 
     return @features;
@@ -941,35 +1067,36 @@ sub parseCDSpredict {
 
     my @features;
 
-    my ($method, $location, $completeness, $orthologs, $prot, $seleno);
-    if (-e $out_txt_file) {
+    my ( $method, $location, $completeness, $orthologs, $prot, $seleno );
+    if ( -e $out_txt_file ) {
 
         open my $fh, "<", $out_txt_file or die $!;
         while (<$fh>) {
             chomp;
             next if (/^#/);
             my @e = split;
-            next unless (@e == 6);
+            next unless ( @e == 6 );
 
-            ($method, $location, $completeness, $orthologs, $prot, $seleno) = @e;
+            ( $method, $location, $completeness, $orthologs, $prot, $seleno ) =
+              @e;
             last;
         }
         close $fh;
 
-        unless (defined $method) {
+        unless ( defined $method ) {
             print STDERR "ERROR: Could not find any CDS!\n";
             return;
         }
     }
 
     my $inference_string;
-    if ($method eq "genscan") {
+    if ( $method eq "genscan" ) {
         $inference_string = "genscan";
-    } elsif ($method eq "alignment") {
-        if ($orthologs =~ /(.+?:.+?)(,|$)/) {
+    } elsif ( $method eq "alignment" ) {
+        if ( $orthologs =~ /(.+?:.+?)(,|$)/ ) {
             $inference_string = "alignment:$1";
         }
-    } elsif ($method eq "longest_orf") {
+    } elsif ( $method eq "longest_orf" ) {
         $inference_string = "longest_orf";
     } else {
         $inference_string = "UNKNOWN";
@@ -978,7 +1105,7 @@ sub parseCDSpredict {
     # CDS feature
     my $cds_feature = Bio::SeqFeature::Generic->new(
         -primary_tag => 'CDS',
-        -location    => getLocationObject($completeness, $location),
+        -location    => getLocationObject( $completeness, $location ),
         -tag         => {
             translation => $prot,
             inference   => $inference_string,
@@ -987,7 +1114,7 @@ sub parseCDSpredict {
     );
     push @features, $cds_feature;
 
-    if ($seleno ne "NA") {
+    if ( $seleno ne "NA" ) {
         my @starts = split ",", $seleno;
         for my $seleno_start (@starts) {
             my $seleno_end = $seleno_start + 2;
@@ -1001,7 +1128,8 @@ sub parseCDSpredict {
                     note => "Selenocysteine"
                 }
               );
-            $cds_feature->add_tag_value('transl_except', "(pos:$seleno_start..$seleno_end,aa:Sec)");
+            $cds_feature->add_tag_value( 'transl_except',
+                "(pos:$seleno_start..$seleno_end,aa:Sec)" );
         }
 
     }
@@ -1009,45 +1137,47 @@ sub parseCDSpredict {
 }
 
 sub getLocationObject {
-    my ($completeness, $location) = @_;
+    my ( $completeness, $location ) = @_;
 
     my @locations = split ",", $location;
 
     my $loc;
-    if (@locations == 1) {
-        $loc = getLocation($completeness, "5end3end", $locations[0]);
+    if ( @locations == 1 ) {
+        $loc = getLocation( $completeness, "5end3end", $locations[0] );
     } else {
         $loc = Bio::Location::Split->new();
         my $start_loc = shift @locations;
         my $end_loc   = pop @locations;
-        $loc->add_sub_Location(getLocation($completeness, "5end", $start_loc));
+        $loc->add_sub_Location(
+            getLocation( $completeness, "5end", $start_loc ) );
         for (@locations) {
-            $loc->add_sub_Location(getLocation($completeness, "exact", $_));
+            $loc->add_sub_Location( getLocation( $completeness, "exact", $_ ) );
         }
-        $loc->add_sub_Location(getLocation($completeness, "3end", $end_loc));
+        $loc->add_sub_Location(
+            getLocation( $completeness, "3end", $end_loc ) );
     }
     return $loc;
 }
 
 sub getLocation {
-    my ($completeness, $end, $string) = @_;
+    my ( $completeness, $end, $string ) = @_;
 
-    my ($start, $stop) = split "-", $string;
-    my $loc = Bio::Location::Fuzzy->new(-start => $start, -end => $stop);
+    my ( $start, $stop ) = split "-", $string;
+    my $loc = Bio::Location::Fuzzy->new( -start => $start, -end => $stop );
 
-    if ($end eq "exact" || !defined $completeness) {
+    if ( $end eq "exact" || !defined $completeness ) {
         $loc->start_pos_type('EXACT');
         $loc->end_pos_type('EXACT');
         return $loc;
     }
 
-    if ($completeness =~ /partial/) {
-        $loc->start_pos_type('BEFORE') if ($end =~ /5end/);
-        $loc->end_pos_type('AFTER')    if ($end =~ /3end/);
-        if ($completeness =~ /5prime/ && $end =~ /5end/) {
+    if ( $completeness =~ /partial/ ) {
+        $loc->start_pos_type('BEFORE') if ( $end =~ /5end/ );
+        $loc->end_pos_type('AFTER')    if ( $end =~ /3end/ );
+        if ( $completeness =~ /5prime/ && $end =~ /5end/ ) {
             $loc->end_pos_type('EXACT');
         }
-        if ($completeness =~ /3prime/ && $end =~ /3end/) {
+        if ( $completeness =~ /3prime/ && $end =~ /3end/ ) {
             $loc->start_pos_type('EXACT');
         }
     }
@@ -1068,7 +1198,7 @@ sub indexTable {
         if (/^#(.+)/) {
             my @e = split "\t", $1;
             for (@e) {
-                (undef, undef, my $name) = getTaxon($_);
+                ( undef, undef, my $name ) = getTaxon($_);
                 $name = "UNKNOWN" unless ($name);
                 $name =~ s/\s/_/g;
                 push @names, $name;
@@ -1077,20 +1207,20 @@ sub indexTable {
             # apply required order of orthologs
             my %numbers = map { $_ => 1 } grep { $_ < @e } @species_order;
             my @missing;
-            for (0 .. $#e) {
-                push @missing, $_ unless (exists $numbers{$_});
+            for ( 0 .. $#e ) {
+                push @missing, $_ unless ( exists $numbers{$_} );
             }
-            @column_order = (@species_order, @missing);
+            @column_order = ( @species_order, @missing );
         } else {
             my @e = split;
-            $ortholog_table{$e[0]} = [@e[@column_order]];
+            $ortholog_table{ $e[0] } = [ @e[@column_order] ];
         }
     }
     close $fh;
     @names = @names[@column_order];
 
     if ($debug) {
-        print "Order of species: ". join ", ", @names;
+        print "Order of species: " . join ", ", @names;
         print "\n";
     }
 
@@ -1100,42 +1230,64 @@ sub indexTable {
 sub performScaffolding {
     my ($obj) = @_;
 
-    my $output_contig_file = catfile($obj->{transcript_dir}, "SCAFFOLD_scaffold.fa");
-    my $output_txt_file    = catfile($obj->{transcript_dir}, "SCAFFOLD_result.txt");
+    my $output_contig_file =
+      catfile( $obj->{transcript_dir}, "SCAFFOLD_scaffold.fa" );
+    my $output_txt_file =
+      catfile( $obj->{transcript_dir}, "SCAFFOLD_result.txt" );
 
-    if (-e $output_txt_file) {
+    if ( -e $output_txt_file ) {
         print "Scaffolded already performed. Skipping.\n" if ($debug);
     } else {
         print "Scaffolding..\n" if ($debug);
-        my $ortholog_file   = catfile($obj->{transcript_dir}, "ortholog.fa");
-        my $contig_file     = catfile($obj->{transcript_dir}, "SCAFFOLD_contig.fa");
-        my $fragment_file   = catfile($obj->{transcript_dir}, "SCAFFOLD_fragments.fa");
-        my $output_aln_file = catfile($obj->{transcript_dir}, "SCAFFOLD_alignment.aln");
-        my $combined_file = catfile($obj->{transcript_dir}, "SCAFFOLD_temp.aln");
+        my $ortholog_file = catfile( $obj->{transcript_dir}, "ortholog.fa" );
+        my $contig_file =
+          catfile( $obj->{transcript_dir}, "SCAFFOLD_contig.fa" );
+        my $fragment_file =
+          catfile( $obj->{transcript_dir}, "SCAFFOLD_fragments.fa" );
+        my $output_aln_file =
+          catfile( $obj->{transcript_dir}, "SCAFFOLD_alignment.aln" );
+        my $combined_file =
+          catfile( $obj->{transcript_dir}, "SCAFFOLD_temp.aln" );
+
         #my $out_dir = catdir($obj->{transcript_dir}, "tgicl");
         #make_path($out_dir);
 
-        my $io = Bio::SeqIO->new(-file => ">" . $contig_file, -format => "fasta");
-        $io->write_seq($obj->{contig_seq});
+        my $io =
+          Bio::SeqIO->new( -file => ">" . $contig_file, -format => "fasta" );
+        $io->write_seq( $obj->{contig_seq} );
 
-        $io = Bio::SeqIO->new(-file => ">" . $fragment_file, -format => "fasta");
-        for (@{$blast->{$obj->{orth_id}}}) {
-            my $fragment_seq = $db_trinity->get_Seq_by_acc($_->[0]);
+        $io =
+          Bio::SeqIO->new( -file => ">" . $fragment_file, -format => "fasta" );
+        for ( @{ $blast->{ $obj->{orth_id} } } ) {
+            my $fragment_seq = $db_trinity->get_Seq_by_acc( $_->[0] );
 
             unless ($fragment_seq) {
                 warn("Fragment not found: $_->[0]");
                 next;
             }
-            $fragment_seq = $fragment_seq->revcom if ($_->[1]);
+            $fragment_seq = $fragment_seq->revcom if ( $_->[1] );
             $io->write_seq($fragment_seq);
         }
 
-        # "-assembling $out_dir", 
-        my @command = ("$^X $FindBin::Bin/scaffolding.pl", "-out-combined $combined_file", "-ortholog $ortholog_file", "-contig $contig_file", "-fragments $fragment_file", "-out-final $output_aln_file", "-output $output_contig_file", ">", "$output_txt_file 2> $output_txt_file.err");
+        my @command = (
+            "$^X $FindBin::Bin/scaffolding.pl",
+            "-out-combined $combined_file",
+            "-ortholog $ortholog_file",
+            "-contig $contig_file",
+            "-fragments $fragment_file",
+            "-out-final $output_aln_file",
+            "-output $output_contig_file",
+            "> $output_txt_file",
+            "2> $output_txt_file.err"
+        );
+
         #print join " ", @command;
-        my $failed = system(join " ", @command);
+        my $failed = system( join " ", @command );
         if ($failed) {
-            warn("Scaffolding failed: " . $obj->{contig_id} . "/" . $obj->{orth_id} . "\n");
+            warn(   "Scaffolding failed: "
+                  . $obj->{contig_id} . "/"
+                  . $obj->{orth_id}
+                  . "\n" );
             return undef;
         }
     }
@@ -1143,11 +1295,14 @@ sub performScaffolding {
     my @features;
     my @fragments;
     my $new_seq;
-    if (-e $output_txt_file) {
+    if ( -e $output_txt_file ) {
 
         # scaffolding worked, but no resulting scaffold produced
-        if (-e $output_contig_file) {
-            my $io = Bio::SeqIO->new(-file => $output_contig_file, -format => "fasta");
+        if ( -e $output_contig_file ) {
+            my $io = Bio::SeqIO->new(
+                -file   => $output_contig_file,
+                -format => "fasta"
+            );
             $new_seq = $io->next_seq if ($io);
         }
         return undef unless ($new_seq);
@@ -1155,11 +1310,11 @@ sub performScaffolding {
         # scaffolding worked, and we have a new contig!
         open my $fh, "<", $output_txt_file or die $!;
         while (<$fh>) {
-            next if (/^#/ || /^$/);
+            next if ( /^#/ || /^$/ );
             chomp;
             my @e = split "\t";
 
-            if ($e[0] eq "best") {
+            if ( $e[0] eq "best" ) {
                 push @features,
                   Bio::SeqFeature::Generic->new(
                     -primary_tag => 'misc_feature',
@@ -1169,7 +1324,7 @@ sub performScaffolding {
                         note => "best contig:$e[1]"
                     }
                   );
-            } elsif ($e[0] eq "fragment") {
+            } elsif ( $e[0] eq "fragment" ) {
                 push @features,
                   Bio::SeqFeature::Generic->new(
                     -primary_tag => 'misc_feature',
@@ -1181,7 +1336,7 @@ sub performScaffolding {
                   );
                 push @fragments, $e[1];
 
-            } elsif ($e[0] eq "gap") {
+            } elsif ( $e[0] eq "gap" ) {
                 push @features,
                   Bio::SeqFeature::Generic->new(
                     -primary_tag => 'assembly_gap',
@@ -1189,7 +1344,7 @@ sub performScaffolding {
                     -end         => $e[3],
                     -tag         => {
                         gap_type         => "within scaffold",
-                        estimated_length => ($e[3] - $e[2] + 1),
+                        estimated_length => ( $e[3] - $e[2] + 1 ),
                     }
                   )
 
@@ -1199,7 +1354,8 @@ sub performScaffolding {
     }
 
     unless (@features) {
-        warn("Something went wrong during feature creation for scaffolding: " . $obj->{contig_id});
+        warn( "Something went wrong during feature creation for scaffolding: "
+              . $obj->{contig_id} );
         return undef;
     }
 
@@ -1215,15 +1371,23 @@ sub getTaxon {
     #
     # Taxonomy currently requires internet connection.
     #
-    my $dbh;
-    eval {
-        $dbh = Bio::DB::Taxonomy->new(-source => 'entrez');
-    };
-    if ($@) {
-        die "ERROR: Failed to connect to taxonomy database. No internet access?\n";
-    }
-    my $taxon      = $dbh->get_taxon(-taxonid => $id);
-    my ($taxon_id, $taxon_name, $divison) = ($id, "UNKNOWN", "UNKNOWN");
+    #
+    my $dbh = Bio::DB::Taxonomy->new(
+        -source    => 'flatfile',
+        -directory => '/misc/enton/data/mbens/tmp/taxon',
+        -nodesfile => '/gsc/biodb/ncbi/taxonomy/nodes.dmp',
+        -namesfile => '/gsc/biodb/ncbi/taxonomy/names.dmp'
+    ) || die "Can't open taxdb: $!";
+
+    #my $dbh;
+    #eval {
+    #    $dbh = Bio::DB::Taxonomy->new(-source => 'entrez');
+    #};
+    #if ($@) {
+    #    die "ERROR: Failed to connect to taxonomy database. No internet access?\n";
+    #}
+    my $taxon = $dbh->get_taxon( -taxonid => $id );
+    my ( $taxon_id, $taxon_name, $divison ) = ( $id, "UNKNOWN", "UNKNOWN" );
     if ($taxon) {
         $taxon_id   = $taxon->id;
         $taxon_name = $taxon->scientific_name;
@@ -1231,7 +1395,7 @@ sub getTaxon {
     } else {
         die "\nERROR: Could not retrieve taxon for ID: $id\n\n";
     }
-    return ($taxon, $taxon_id, $taxon_name, $DIVISION{$division});
+    return ( $taxon, $taxon_id, $taxon_name, $DIVISION{$division} );
 }
 
 sub getBlastHash {
@@ -1239,14 +1403,18 @@ sub getBlastHash {
 
     my $hash;
 
-    if (-e "$file.index" && !$opt{reindex}) {
+    if ( -e "$file.index" && !$opt{reindex} ) {
         $hash = retrieve "$file.index";
     } else {
         open my $fh, "<", $file or die $!;
         while (<$fh>) {
             next if (/^#/);
             my @e = split;
-            push @{$hash->{$e[TARGET_ID]}}, [$e[QUERY_ID], $e[TARGET_START], $e[TARGET_END], $e[IDENTITY], $e[SYMBOL]];
+            push @{ $hash->{ $e[TARGET_ID] } },
+              [
+                $e[QUERY_ID], $e[TARGET_START], $e[TARGET_END],
+                $e[IDENTITY], $e[SYMBOL]
+              ];
         }
         close $fh;
         store $hash, "$file.index";
@@ -1258,8 +1426,9 @@ sub getBlastHash {
 sub getScaffoldFragments {
     my ($file) = @_;
 
-    unless (defined $file && -e $file) {
-        print STDERR "Could not find file with BLAST results for scaffolding! No scaffolding!\n";
+    unless ( defined $file && -e $file ) {
+        print STDERR
+          "Could not find file with BLAST results for scaffolding! No scaffolding!\n";
         return undef;
     }
 
@@ -1272,7 +1441,7 @@ sub getScaffoldFragments {
         my @e = split;
 
         $current_hit = $e[TARGET_ID] unless ($current_hit);
-        if ($current_hit ne $e[TARGET_ID]) {
+        if ( $current_hit ne $e[TARGET_ID] ) {
             $hash->{$current_hit} = [@contigs];
             @contigs              = ();
             $current_hit          = $e[TARGET_ID];
