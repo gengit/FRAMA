@@ -83,12 +83,16 @@ of past].
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use Data::Dumper;
 use Pod::Usage;
 use Bio::DB::Fasta;
 use Bio::SeqIO;
 use Bio::AlignIO;
+use Bio::AlignIO::fasta;
 use Bio::SimpleAlign;
 use Set::IntSpan::Fast;
 
@@ -96,15 +100,13 @@ use File::Path qw(make_path remove_tree);
 use File::Spec::Functions;
 use File::Temp qw(tempfile tempdir);
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 use GenbankHelper;
 use StringHelper;
 use Bio::Range;
 use POSIX qw(strftime);
 
 pod2usage( -message => "\n\tNo arguments\n", -verbose => 1 )
-if ( @ARGV == 0 );
+  if ( @ARGV == 0 );
 
 use constant MAX_INT => 9**9**9;
 use constant MIN_INT => -9**9**9;
@@ -119,25 +121,22 @@ my $GAP_LENGTH = 10;
 my $BBH_EXTEND = 30;
 
 my %opt = (
-    'reindex'            => 0,
-    'fragment-overlap'   => 66,
-    'fragment-identity'  => 98,
-    'allow-gap-embedded' => 200,
-    'cpu'                => 1,
-    'min-contribution'   => 20,
+    'reindex'          => 0,
+    'cpu'              => 1,
+    'min-contribution' => 20,
+    'fragment-overlap' => 5,
 );
 
 my $man  = 0;
 my $help = 0;
 GetOptions(
-    \%opt,                   'contig|c=s',
-    'ortholog|r=s',          'cds=i{2}',
-    'fragments=s',           'blast=s',
-    'fragment-list=s',       'output|o=s',
-    'out-combined|oc=s',     'out-final|of=s',
-    'fragment-overlap|fo=f', 'fragment-identity|fi=f',
-    'allow-gap-embedded=i',  'cpu=i', 'assembling=s',
-    'out-filtered=s'
+    \%opt,               'contig|c=s',
+    'ortholog|r=s',      'cds=i{2}',
+    'fragments=s',       'blast=s',
+    'fragment-list=s',   'output|o=s',
+    'out-combined|oc=s', 'out-final|of=s',
+    'cpu=i',             'assembling=s',
+    'out-filtered=s',    'fragment-overlap=s'
 ) or pod2usage(1);
 
 pod2usage( -verbose => 2 ) if $opt{help};
@@ -158,16 +157,22 @@ my $orth_seq = $io->next_seq;
 die "\nNo ortholog sequence found.\n\n" unless ($orth_seq);
 my $orth_id = $orth_seq->id;
 
-my $db_fragments = Bio::DB::Fasta->new( $opt{fragments}, -reindex => $opt{reindex} );
+my $db_fragments =
+  Bio::DB::Fasta->new( $opt{fragments}, -reindex => $opt{reindex} );
 die "Could not read fragment file" unless ($db_fragments);
 
-my $aln = Bio::SimpleAlign->new();
-$aln->add_seq(
-    Bio::LocatableSeq->new(
-        -id  => $orth_seq->id,
-        -seq => $orth_seq->seq
-    )
+my $aln    = Bio::SimpleAlign->new();
+my $locseq = Bio::LocatableSeq->new(
+    '-seq'        => $orth_seq->seq,
+    '-display_id' => $orth_seq->id,
+    '-start'      => 1,
+    '-end'        => $orth_seq->length,
 );
+$aln->add_seq($locseq);
+
+#print Dumper $orth_seq;
+#print Dumper $locseq;
+#print Dumper $aln;
 
 # historical (now only for visualiziation purpose)
 my $cds_range;
@@ -182,8 +187,8 @@ if ( $opt{cds} ) {
         Bio::LocatableSeq->new(
             -id  => "CDS_" . $orth_seq->id,
             -seq => "-" x ( $start - 1 )
-            . $orth_seq->subseq( $start, $end )
-            . "-" x ( $orth_seq->length - $end )
+              . $orth_seq->subseq( $start, $end )
+              . "-" x ( $orth_seq->length - $end )
         )
     );
 }
@@ -191,15 +196,18 @@ if ( $opt{cds} ) {
 # alignment output: sequences order => Orth, CDS, Consensus, Fragments
 my @order_sequences;
 if ( $opt{cds} ) {
-    @order_sequences =
-    ( $orth_seq->id, "CDS_" . $orth_seq->id, "Consensus", "BEST_" . $contig_seq->id );
+    @order_sequences = (
+        $orth_seq->id, "CDS_" . $orth_seq->id,
+        "Consensus",   "BEST_" . $contig_seq->id
+    );
 } else {
-    @order_sequences = ( $orth_seq->id, "Consensus", "BEST_" . $contig_seq->id );
+    @order_sequences =
+      ( $orth_seq->id, "Consensus", "BEST_" . $contig_seq->id );
 }
 
 # get all fragments
 my @fragments;
-if ( $opt{blast} ) { # via blast
+if ( $opt{blast} ) {    # via blast
     open FH, "<", $opt{blast} or die $!;
     while (<FH>) {
         chomp;
@@ -211,15 +219,18 @@ if ( $opt{blast} ) { # via blast
         ];
     }
     close FH;
-} elsif ( $opt{'fragment-list'} ) { # via ID
+} elsif ( $opt{'fragment-list'} ) {    # via ID
     open FH, "<", $opt{blast} or die $!;
     while (<FH>) {
         chomp;
         push @fragments, $_;
     }
     close FH;
-} elsif ( $opt{'fragments'} ) { # 
-    @fragments = $db_fragments->get_all_primary_ids;
+} elsif ( $opt{'fragments'} ) {        #
+    @fragments = grep { !/^__/ } keys %{ $db_fragments->{offsets} };
+
+    # only thing standing between BioPerl version 1.006901 and 1.006924
+    #@fragments = $db_fragments->get_all_primary_ids;
 }
 
 # Header
@@ -249,31 +260,42 @@ for (@fragments) {
         print "# Not found: $_\n" unless ($fragment_seq);
     }
     push @fragment_seqs,
-    Bio::LocatableSeq->new( -id => "FRAGMENT_" . $_, -seq => $fragment_seq->seq );
+      Bio::LocatableSeq->new(
+        -id  => "FRAGMENT_" . $_,
+        -seq => $fragment_seq->seq
+      );
 }
 
 unless ( @fragment_seqs == @fragments ) {
     die "\nSequences not found.\n\n";
 }
-push @fragment_seqs, Bio::LocatableSeq->new( -id => "BEST_" . $contig_seq->id, -seq => $contig_seq->seq );
+push @fragment_seqs,
+  Bio::LocatableSeq->new(
+    -id  => "BEST_" . $contig_seq->id,
+    -seq => $contig_seq->seq
+  );
 
 # assembling overlapping contigs
-my ($fragment_seqs_ref, $cluster2contig);
-if (exists $opt{assembling}) {
-    ($fragment_seqs_ref, $cluster2contig) = assemble_fragments(\@fragment_seqs);
+my ( $fragment_seqs_ref, $cluster2contig );
+if ( exists $opt{assembling} ) {
+    ( $fragment_seqs_ref, $cluster2contig ) =
+      assemble_fragments( \@fragment_seqs );
 }
 
 # multiple sequence alignment
 if ($fragment_seqs_ref) {
     $aln = align_fragments( $aln, $fragment_seqs_ref );
 } else {
-    $aln = align_fragments( $aln, \@fragment_seqs);
+    $aln = align_fragments( $aln, \@fragment_seqs );
 }
-    
+
 # intermediate output
 if ( $opt{'out-combined'} ) {
-    my $io = Bio::AlignIO->new( -file => ">" . $opt{'out-combined'}, -format => "clustalw" );
     my $sorted_aln = sortAlignment( $aln, \@order_sequences );
+    my $io = Bio::AlignIO->new(
+        -file   => ">" . $opt{'out-combined'},
+        -format => "clustalw"
+    );
     $io->write_aln($sorted_aln);
 }
 
@@ -281,7 +303,9 @@ if ( $opt{'out-combined'} ) {
 $aln = filterFragments($aln);
 
 # no scaffolding possible
-if ( ($opt{cds} && $aln->num_sequences <= 3) || (!$opt{cds} && $aln->num_sequences <= 2) ) {
+if (   ( $opt{cds} && $aln->num_sequences <= 3 )
+    || ( !$opt{cds} && $aln->num_sequences <= 2 ) )
+{
     # TODO: write contig IDs of clusters to file
     print "\n# Nothing to do.\n";
     exit;
@@ -289,25 +313,29 @@ if ( ($opt{cds} && $aln->num_sequences <= 3) || (!$opt{cds} && $aln->num_sequenc
 
 # final alignment after filtering
 if ( $opt{'out-filtered'} ) {
-    my $io = Bio::AlignIO->new( -file => ">" . $opt{'out-filtered'}, -format => "clustalw" );
     my $sorted_aln = sortAlignment( $aln, \@order_sequences );
+    my $io = Bio::AlignIO->new(
+        -file   => ">" . $opt{'out-filtered'},
+        -format => "clustalw"
+    );
     $io->write_aln($sorted_aln);
 }
 
-#my $consensus = consensus($consensus_aln);
-
 my $consensus = prepare_consensus($aln);
-my $consensus_seq = Bio::LocatableSeq->new( -seq => $consensus, -id => "Consensus" );
+my $consensus_seq =
+  Bio::LocatableSeq->new( -seq => $consensus, -id => "Consensus" );
 $aln->add_seq($consensus_seq);
 
 # remove flanking 'N' and gap character in consensus from alignment
-my ( $overhang_left, $overhang_right ) = StringHelper::getOverhang( $consensus, "N" );
+my ( $overhang_left, $overhang_right ) =
+  StringHelper::getOverhang( $consensus, "N" );
 my $remove_columns = getGapPos($consensus);
 if ( $overhang_left > 0 ) {
     push @$remove_columns, [ 0, $overhang_left - 1 ];
 }
 if ( $overhang_right > 0 ) {
-    push @$remove_columns, [ length($consensus) - $overhang_right, length($consensus) ];
+    push @$remove_columns,
+      [ length($consensus) - $overhang_right, length($consensus) ];
 }
 
 if ( @$remove_columns > 0 ) {
@@ -320,8 +348,11 @@ if ( $opt{output} ) {
 }
 
 if ( $opt{'out-final'} ) {
-    my $io = Bio::AlignIO->new( -file => ">" . $opt{'out-final'}, -format => "clustalw" );
     my $sorted_aln = sortAlignment( $aln, \@order_sequences );
+    my $io = Bio::AlignIO->new(
+        -file   => ">" . $opt{'out-final'},
+        -format => "clustalw"
+    );
     $io->write_aln($sorted_aln);
 }
 
@@ -340,15 +371,18 @@ my @remaining = grep { !$map{$_} } map { $_->id } $aln->each_seq;
 push @order_sequences, @remaining;
 
 @fragments = grep { exists $fragment_pos{$_} } @remaining;
-@fragments = sort { $fragment_pos{$a}->[0] <=> $fragment_pos{$b}->[0] } @fragments;
+@fragments =
+  sort { $fragment_pos{$a}->[0] <=> $fragment_pos{$b}->[0] } @fragments;
 
-print join "\t", "best", $contig_seq->id, $fragment_pos{ "BEST_" . $contig_seq->id }->[0] + 1,
-$fragment_pos{ "BEST_" . $contig_seq->id }->[1];
+print join "\t", "best", $contig_seq->id,
+  $fragment_pos{ "BEST_" . $contig_seq->id }->[0],
+  $fragment_pos{ "BEST_" . $contig_seq->id }->[1];
 print "\n";
 
 for (@fragments) {
     ( my $clean_id = $_ ) =~ s/FRAGMENT_//;
-    print join "\t", "fragment", $clean_id, $fragment_pos{$_}->[0] + 1, $fragment_pos{$_}->[1];
+    print join "\t", "fragment", $clean_id, $fragment_pos{$_}->[0],
+      $fragment_pos{$_}->[1];
     print "\n";
 }
 
@@ -358,25 +392,27 @@ while ( $consensus_string =~ /(N{5,})/ig ) {
 }
 
 if ( $opt{'out-contig'} ) {
-    my $io = Bio::SeqIO->new( -file => ">" . $opt{'out-contig'}, -format => "fasta" );
-    $io->write_seq( Bio::Seq->new( -id => $contig_seq->id, -seq => $consensus_string ) );
+    my $io =
+      Bio::SeqIO->new( -file => ">" . $opt{'out-contig'}, -format => "fasta" );
+    $io->write_seq(
+        Bio::Seq->new( -id => $contig_seq->id, -seq => $consensus_string ) );
 }
 
 sub count_seq {
-    my ($aln, $pos) = @_;
+    my ( $aln, $pos ) = @_;
 
     my @count;
     my $counter = 0;
     for my $seq ( $aln->each_seq ) {
         my $letter = substr( $seq->seq, $pos, 1 );
 
-        return [$counter] if ($seq->id =~ /^BEST/ && $letter ne "X");
+        return [$counter] if ( $seq->id =~ /^BEST/ && $letter ne "X" );
 
-        push @count, $counter if ($letter ne "X");
+        push @count, $counter if ( $letter ne "X" );
         $counter++;
     }
 
-    if (@count > 0) {
+    if ( @count > 0 ) {
         return \@count;
     } else {
         return [-1];
@@ -386,7 +422,7 @@ sub count_seq {
 sub prepare_consensus {
     my ($aln) = @_;
 
-    # prepare alignment; replace overhanging "-" with "X" 
+    # prepare alignment; replace overhanging "-" with "X"
     my $consensus_aln = Bio::SimpleAlign->new();
     for ( $aln->each_seq ) {
         next if ( $_->id =~ /$orth_id/ );
@@ -403,47 +439,57 @@ sub prepare_consensus {
     my @ranges;
     my @ids;
     my $length = $consensus_aln->length_flushed;
-    for ($consensus_aln->each_seq) {
+    for ( $consensus_aln->each_seq ) {
         my ( $start, $end ) = StringHelper::getRange( $_->seq, "X" );
-        my $range = Bio::Range->new(-start => $start, -end => $end);
+        my $range = Bio::Range->new( -start => $start, -end => $end );
         push @ranges, $range;
-        push @ids, $_->id;
+        push @ids,    $_->id;
     }
 
     # get number of sequences for each position (to identify overlapping regions)
-    my @num_sequences = map { 0 } 0..($length-1);
+    my @num_sequences = map { 0 } 0 .. ( $length - 1 );
     for ( 0 .. ( $length - 1 ) ) {
-        $num_sequences[$_] = count_seq($consensus_aln, $_);
+        $num_sequences[$_] = count_seq( $consensus_aln, $_ );
     }
 
-    my @e = grep { defined ref($_) and ref($_) eq "ARRAY" and @{$_} > 2 } @num_sequences;
-    if (@e > 0) {
-        print STDERR "WARNING: More than 2 overlapping sequences not implemented yet.\n";
+    my @e = grep { defined ref($_) and ref($_) eq "ARRAY" and @{$_} > 2 }
+      @num_sequences;
+    if ( @e > 0 ) {
+        print STDERR
+          "WARNING: More than 2 overlapping sequences not implemented yet.\n";
     }
 
     # get overlapping regions as [Bio::Range, [pos sequence1, pos sequence2]]
     my $start = 0;
-    my $last = $num_sequences[0];
-    if (@$last > 1) {
+    my $last  = $num_sequences[0];
+    if ( @$last > 1 ) {
         $start = 1;
     }
-    $last = join(" ", @$last);
+    $last = join( " ", @$last );
 
     my @overlapping;
-    for (my $i = 1; $i < @num_sequences; $i++) {
+    for ( my $i = 1; $i < @num_sequences; $i++ ) {
         my $index = $num_sequences[$i];
-        my $current = join(" ", @$index);
+        my $current = join( " ", @$index );
 
-        if (@$index > 1) {
-            if ($current ne $last) {
-                if ($start > 0) {
-                    push @overlapping, [Bio::Range->new(-start =>$start, -end => $i), [split " ", $last]];
+        if ( @$index > 1 ) {
+            if ( $current ne $last ) {
+                if ( $start > 0 ) {
+                    push @overlapping,
+                      [
+                        Bio::Range->new( -start => $start, -end => $i ),
+                        [ split " ", $last ]
+                      ];
                 }
                 $start = $i + 1;
             }
         } else {
-            if ($start > 0) {
-                push @overlapping, [Bio::Range->new(-start =>$start, -end => $i), [split " ", $last]];
+            if ( $start > 0 ) {
+                push @overlapping,
+                  [
+                    Bio::Range->new( -start => $start, -end => $i ),
+                    [ split " ", $last ]
+                  ];
             }
             $start = 0;
         }
@@ -451,50 +497,90 @@ sub prepare_consensus {
     }
 
     if ($start) {
-        push @overlapping, [Bio::Range->new(-start => $start, -end => scalar @num_sequences), [split " ", $last]];
+        push @overlapping,
+          [
+            Bio::Range->new( -start => $start, -end => scalar @num_sequences ),
+            [ split " ", $last ]
+          ];
     }
 
     for my $overlap (@overlapping) {
 
-        if ($overlap->[0]->length > 5) {
-            my $first_half_end = $overlap->[0]->start + int ($overlap->[0]->length / 2 ) - 1;
+        if ( $overlap->[0]->length > 5 ) {
+            my $first_half_end =
+              $overlap->[0]->start + int( $overlap->[0]->length / 2 ) - 1;
 
-            my $first_range = Bio::Range->new(-start => $overlap->[0]->start, -end => $first_half_end);
-            my $second_range = Bio::Range->new(-start => $first_half_end+1, -end => $overlap->[0]->end);
+            my $first_range = Bio::Range->new(
+                -start => $overlap->[0]->start,
+                -end   => $first_half_end
+            );
+            my $second_range = Bio::Range->new(
+                -start => $first_half_end + 1,
+                -end   => $overlap->[0]->end
+            );
 
             # first half
-            my $first_ID1 = getIdentitySlice($aln, $orth_id, $ids[$overlap->[1]->[0]], $first_range,0); 
-            my $first_ID2 = getIdentitySlice($aln, $orth_id, $ids[$overlap->[1]->[1]], $first_range,0); 
+            my $first_ID1 =
+              getIdentitySlice( $aln, $orth_id, $ids[ $overlap->[1]->[0] ],
+                $first_range, 0 );
+            my $first_ID2 =
+              getIdentitySlice( $aln, $orth_id, $ids[ $overlap->[1]->[1] ],
+                $first_range, 0 );
             my $first_index = $first_ID1 > $first_ID2 ? 0 : 1;
 
-            my $second_ID1 = getIdentitySlice($aln, $orth_id, $ids[$overlap->[1]->[0]], $second_range,0); 
-            my $second_ID2 = getIdentitySlice($aln, $orth_id, $ids[$overlap->[1]->[1]], $second_range,0); 
+            my $second_ID1 =
+              getIdentitySlice( $aln, $orth_id, $ids[ $overlap->[1]->[0] ],
+                $second_range, 0 );
+            my $second_ID2 =
+              getIdentitySlice( $aln, $orth_id, $ids[ $overlap->[1]->[1] ],
+                $second_range, 0 );
             my $second_index = $second_ID1 > $second_ID2 ? 0 : 1;
 
-            for ($first_range->start -1 .. $first_range->end - 1) {
-                $num_sequences[$_] = [$overlap->[1]->[$first_index]];
+            for ( $first_range->start - 1 .. $first_range->end - 1 ) {
+                $num_sequences[$_] = [ $overlap->[1]->[$first_index] ];
             }
-            for ($second_range->start -1 .. $second_range->end - 1) {
-                $num_sequences[$_] = [$overlap->[1]->[$second_index]];
+            for ( $second_range->start - 1 .. $second_range->end - 1 ) {
+                $num_sequences[$_] = [ $overlap->[1]->[$second_index] ];
             }
 
             print "##\n";
-            print "# Overlap between ". $ids[$overlap->[1]->[0]] . " and " . $ids[$overlap->[1]->[1]] ."\n";
-            print "#    Range: " . $overlap->[0]->start ."-".$overlap->[0]->end ."\n";
-            print "#    Identity 1st half: $first_ID1 - $first_ID2; " . $first_range->start ."-". $first_range->end. " => " .$ids[$overlap->[1]->[$first_index]]."\n";
-            print "#    Identity 2nd half: $second_ID1 - $second_ID2; " . $second_range->start ."-". $second_range->end . " => " . $ids[$overlap->[1]->[$second_index]] ."\n";
+            print "# Overlap between "
+              . $ids[ $overlap->[1]->[0] ] . " and "
+              . $ids[ $overlap->[1]->[1] ] . "\n";
+            print "#    Range: "
+              . $overlap->[0]->start . "-"
+              . $overlap->[0]->end . "\n";
+            print "#    Identity 1st half: $first_ID1 - $first_ID2; "
+              . $first_range->start . "-"
+              . $first_range->end . " => "
+              . $ids[ $overlap->[1]->[$first_index] ] . "\n";
+            print "#    Identity 2nd half: $second_ID1 - $second_ID2; "
+              . $second_range->start . "-"
+              . $second_range->end . " => "
+              . $ids[ $overlap->[1]->[$second_index] ] . "\n";
             print "\n";
         } else {
-            my $first_ID1 = getIdentitySlice($aln, $orth_id, $ids[$overlap->[1]->[0]], $overlap->[0],0); 
-            my $first_ID2 = getIdentitySlice($aln, $orth_id, $ids[$overlap->[1]->[1]], $overlap->[0],0); 
+            my $first_ID1 =
+              getIdentitySlice( $aln, $orth_id, $ids[ $overlap->[1]->[0] ],
+                $overlap->[0], 0 );
+            my $first_ID2 =
+              getIdentitySlice( $aln, $orth_id, $ids[ $overlap->[1]->[1] ],
+                $overlap->[0], 0 );
             my $first_index = $first_ID1 > $first_ID2 ? 0 : 1;
-            for ($overlap->[0]->start -1 .. $overlap->[0]->end - 1) {
-                $num_sequences[$_] = [$overlap->[1]->[$first_index]];
+            for ( $overlap->[0]->start - 1 .. $overlap->[0]->end - 1 ) {
+                $num_sequences[$_] = [ $overlap->[1]->[$first_index] ];
             }
             print "##\n";
-            print "# Overlap between ". $ids[$overlap->[1]->[0]] . " and " . $ids[$overlap->[1]->[1]] ."\n";
-            print "#    Range: " . $overlap->[0]->start ."-".$overlap->[0]->end ."\n";
-            print "#    Identity: $first_ID1 - $first_ID2; " . $overlap->[0]->start ."-". $overlap->[0]->end. " => " . $ids[$overlap->[1]->[$first_index]] ."\n";
+            print "# Overlap between "
+              . $ids[ $overlap->[1]->[0] ] . " and "
+              . $ids[ $overlap->[1]->[1] ] . "\n";
+            print "#    Range: "
+              . $overlap->[0]->start . "-"
+              . $overlap->[0]->end . "\n";
+            print "#    Identity: $first_ID1 - $first_ID2; "
+              . $overlap->[0]->start . "-"
+              . $overlap->[0]->end . " => "
+              . $ids[ $overlap->[1]->[$first_index] ] . "\n";
             print "\n";
         }
     }
@@ -503,10 +589,12 @@ sub prepare_consensus {
     my $counter = 0;
     for (@num_sequences) {
         my $pos = $_->[0];
-        if ($pos == -1) {
+        if ( $pos == -1 ) {
             push @chars, "N";
         } else {
-            push @chars, substr($consensus_aln->get_seq_by_pos($pos+1)->seq, $counter, 1);
+            push @chars,
+              substr( $consensus_aln->get_seq_by_pos( $pos + 1 )->seq,
+                $counter, 1 );
         }
         $counter++;
     }
@@ -515,35 +603,35 @@ sub prepare_consensus {
 }
 
 sub set_cover {
-    my ($S, $R, $w) = @_;
-    my $minCost = MAX_INT;
+    my ( $S, $R, $w ) = @_;
+    my $minCost    = MAX_INT;
     my $minElement = -1;
-    for (my $i = 0; $i < @$S; $i++) {
+    for ( my $i = 0; $i < @$S; $i++ ) {
         my $i_set = $S->[$i]->intersection($R);
 
-        next unless ($i_set->cardinality > $opt{'min-contribution'});
+        next unless ( $i_set->cardinality > $opt{'min-contribution'} );
 
-        # TODO: eventuel sqrt
+        # TODO: sqrt
         my $cost = $w->[$i] / $i_set->cardinality;
 
-        if ($cost < $minCost) {
-            $minCost = $cost;
+        if ( $cost < $minCost ) {
+            $minCost    = $cost;
             $minElement = $i;
         }
     }
-    return undef if ($minElement == -1); 
+    return undef if ( $minElement == -1 );
 
-    return ($minElement, $minCost);
+    return ( $minElement, $minCost );
 }
 
 sub filterFragments {
     my ($aln) = @_;
 
     my %output;
-    my (@ranges, @weights, @ids);
-    for my $seq ($aln->each_seq) {
+    my ( @ranges, @weights, @ids );
+    for my $seq ( $aln->each_seq ) {
         ( my $clean_id = $seq->id ) =~ s/(.+?)\/(.+)/$1/g;
-        next unless ($clean_id =~ /^FRAGMENT_/ || $clean_id =~ /^BEST/); 
+        next unless ( $clean_id =~ /^FRAGMENT_/ || $clean_id =~ /^BEST/ );
 
         push @ids, $clean_id;
 
@@ -552,56 +640,57 @@ sub filterFragments {
         my $range = Set::IntSpan::Fast->new("$start-$end");
         push @ranges, $range;
 
-        my $identity = getIdentitySlice($aln, $orth_id, $seq->id, [$start, $end], 1); 
-        my $weight = ($clean_id =~ /^BEST/) ? 0 : sprintf("%.0f", (100 - $identity));
+        my $identity =
+          getIdentitySlice( $aln, $orth_id, $seq->id, [ $start, $end ], 1 );
+        my $weight =
+          ( $clean_id =~ /^BEST/ ) ? 0 : sprintf( "%.0f", ( 100 - $identity ) );
         push @weights, $weight;
-        
+
         # ouptut [identity, length]
-        $output{$clean_id} = [
-            $identity,
-            $range->cardinality,
-            $weight
-        ];
+        $output{$clean_id} = [ $identity, $range->cardinality, $weight ];
     }
 
-    # output 
+    # output
     print "##\n";
     print "# Fragments\n";
-    for (sort keys %output) {
-        print "#    $_ " . $output{$_}->[0] ."; " . $output{$_}->[1]."; " . $output{$_}->[2] ."\n";
+    for ( sort keys %output ) {
+        print "#    $_ "
+          . $output{$_}->[0] . "; "
+          . $output{$_}->[1] . "; "
+          . $output{$_}->[2] . "\n";
     }
     print "\n";
 
-
-    my $length = $aln->length_flushed;
+    my $length         = $aln->length_flushed;
     my $alignment_span = Set::IntSpan::Fast->new("1-$length");
 
     # flag resulting fragments
     my @result = map { 0 } @ranges;
 
-    my (@order_frag, @cost);
+    my ( @order_frag, @cost );
     while () {
-        my ($S_i, $cost) = set_cover(\@ranges, $alignment_span, \@weights);
-        
+        my ( $S_i, $cost ) = set_cover( \@ranges, $alignment_span, \@weights );
+
         # no contig found
-        last if (not defined $S_i); 
+        last if ( not defined $S_i );
 
         $result[$S_i] = 1;
         push @order_frag, $S_i;
-        push @cost, $cost;
+        push @cost,       $cost;
 
-        # remove fragment from 
-        $alignment_span->remove_from_string($ranges[$S_i]->as_string);
+        # remove fragment from
+        $alignment_span->remove_from_string( $ranges[$S_i]->as_string );
     }
 
     my $count = 0;
-    my (@ranges_bio, %ids, @ids_bio);
+    my ( @ranges_bio, %ids, @ids_bio );
     for my $seq ( $aln->each_seq ) {
-        if ($seq->id =~ /^FRAGMENT_/ || $seq->id =~ /^BEST/) {
-            if ($result[$count]) { 
-                my ($start, $end) = StringHelper::getRange($seq->seq, "-");
-                push @ranges_bio, Bio::Range->new(-start => $start, -end => $end);
-                $ids{$seq->id} = 1;
+        if ( $seq->id =~ /^FRAGMENT_/ || $seq->id =~ /^BEST/ ) {
+            if ( $result[$count] ) {
+                my ( $start, $end ) = StringHelper::getRange( $seq->seq, "-" );
+                push @ranges_bio,
+                  Bio::Range->new( -start => $start, -end => $end );
+                $ids{ $seq->id } = 1;
                 push @ids_bio, $seq->id;
             }
             $count++;
@@ -609,65 +698,68 @@ sub filterFragments {
     }
 
     # remove shorter contigs embedded in longer contigs
-    my @range_order = sort { 
-        $ranges_bio[$a]->start <=> $ranges_bio[$b]->start || 
-        $ranges_bio[$b]->length <=> $ranges_bio[$a]->length 
-    } 0..$#ranges_bio;
+    my @range_order = sort {
+             $ranges_bio[$a]->start <=> $ranges_bio[$b]->start
+          || $ranges_bio[$b]->length <=> $ranges_bio[$a]->length
+    } 0 .. $#ranges_bio;
 
     my %completely_embedded;
     my @indices;
-    for (my $i = 0; $i < @ranges_bio; $i++) {
-        my $id_A = $ids_bio[$range_order[$i]];
-        next if ($id_A =~ /^BEST/);
-        next if ($completely_embedded{$id_A});
+    for ( my $i = 0; $i < @ranges_bio; $i++ ) {
+        my $id_A = $ids_bio[ $range_order[$i] ];
+        next if ( $id_A =~ /^BEST/ );
+        next if ( $completely_embedded{$id_A} );
 
-        my $range_A = $ranges_bio[$range_order[$i]];
+        my $range_A = $ranges_bio[ $range_order[$i] ];
 
-        for (my $j = $i + 1; $j < @ranges_bio; $j++) {
-            my $id_B = $ids_bio[$range_order[$j]];
-            next if ($id_B =~ /^BEST/);
-            next if ($completely_embedded{$id_A});
+        for ( my $j = $i + 1; $j < @ranges_bio; $j++ ) {
+            my $id_B = $ids_bio[ $range_order[$j] ];
+            next if ( $id_B =~ /^BEST/ );
+            next if ( $completely_embedded{$id_A} );
 
-            my $range_B = $ranges_bio[$range_order[$j]];
+            my $range_B = $ranges_bio[ $range_order[$j] ];
 
-            if ($range_A->contains($range_B)) {
+            if ( $range_A->contains($range_B) ) {
                 $completely_embedded{$id_B} = 1;
-                $ids{$id_B} = 0;
+                $ids{$id_B}                 = 0;
                 push @indices, $range_order[$j];
             }
         }
     }
 
     my $filtered_aln = Bio::SimpleAlign->new();
-    $filtered_aln->add_seq($aln->get_seq_by_id($orth_id));
+    $filtered_aln->add_seq( $aln->get_seq_by_id($orth_id) );
 
     print "##\n";
     print "# Keeping sequences\n";
-    for ($aln->each_seq) {
-        if ($ids{$_->id}) {
-            $filtered_aln->add_seq($_) ;
-            print "#    " .$_->id ."\n";
+    for ( $aln->each_seq ) {
+        if ( $ids{ $_->id } ) {
+            $filtered_aln->add_seq($_);
+            print "#    " . $_->id . "\n";
         }
     }
     print "\n";
 
-    die "Filtering went wrong. This should not happend\n" unless ($filtered_aln); 
+    die "Filtering went wrong. This should not happend\n"
+      unless ($filtered_aln);
     $filtered_aln = $filtered_aln->remove_columns( ['all_gaps_columns'] );
 
     return $filtered_aln;
 }
 
 sub overhangTrim {
-    my ($aln, $refID, $refPos) = @_;
+    my ( $aln, $refID, $refPos ) = @_;
 
     my $ref_seq;
     if ($refID) {
         $ref_seq = $aln->get_seq_by_id($refID);
-    } elsif ($refPos > 0) {
+    } elsif ( $refPos > 0 ) {
         $ref_seq = $aln->get_seq_by_pos($refPos);
     } else {
         $ref_seq = $aln->get_seq_by_pos(1);
-        print STDERR "Not reference sequence specified. Using first sequence in alignment: ". $ref_seq->id . "\n";
+        print STDERR
+          "Not reference sequence specified. Using first sequence in alignment: "
+          . $ref_seq->id . "\n";
     }
 
     my $start = 1;
@@ -678,51 +770,51 @@ sub overhangTrim {
 
     my $new_aln = $aln;
 
-    if ($ref_seq->seq =~ /^(-+)/) {
+    if ( $ref_seq->seq =~ /^(-+)/ ) {
         $left_overhang = length($1);
         $start         = length($1) + 1;
     }
-    if ($ref_seq->seq =~ /(-+)$/) {
+    if ( $ref_seq->seq =~ /(-+)$/ ) {
         $right_overhang = length($1);
         $end -= length($1);
     }
 
     # get slice of aligned part
-    if ($left_overhang != 0 || $right_overhang != 0) {
-        $new_aln = $new_aln->slice($start, $end) if ($left_overhang > 1 && $right_overhang > 1);
+    if ( $left_overhang != 0 || $right_overhang != 0 ) {
+        $new_aln = $new_aln->slice( $start, $end )
+          if ( $left_overhang > 1 && $right_overhang > 1 );
     }
 
     return $new_aln;
 }
 
-
 # Computes pairwise identity between to specified sequences (IDs) within a
-# specific region (Bio::Range). Sequences must be aligned and provided in 
+# specific region (Bio::Range). Sequences must be aligned and provided in
 # as Bio::SimpleAlign.
 #
 # Gaps longer than 9bp are removed beforehand.
 #
 sub getIdentitySlice {
-    my $aln   = shift;
-    my $id1   = shift;
-    my $id2   = shift;
-    my $range = shift;
+    my $aln      = shift;
+    my $id1      = shift;
+    my $id2      = shift;
+    my $range    = shift;
     my $clipping = shift || 0;
 
-    if (defined ref($range) && ref($range) eq "ARRAY") {
-        $range = Bio::Range->new(-start => $range->[0], -end => $range->[1]);
+    if ( defined ref($range) && ref($range) eq "ARRAY" ) {
+        $range = Bio::Range->new( -start => $range->[0], -end => $range->[1] );
     }
-    my $seq1 = $aln->get_seq_by_id($id1)->trunc($range->start, $range->end);
-    my $seq2 = $aln->get_seq_by_id($id2)->trunc($range->start, $range->end);
+    my $seq1 = $aln->get_seq_by_id($id1)->trunc( $range->start, $range->end );
+    my $seq2 = $aln->get_seq_by_id($id2)->trunc( $range->start, $range->end );
 
     my $new_aln = Bio::SimpleAlign->new();
     $new_aln->add_seq($seq1);
     $new_aln->add_seq($seq2);
-    $new_aln = $new_aln->remove_columns(['all_gaps_columns']);
+    $new_aln = $new_aln->remove_columns( ['all_gaps_columns'] );
 
     if ($clipping) {
-        $new_aln = overhangTrim($new_aln, $id1);
-        $new_aln = overhangTrim($new_aln, $id2);
+        $new_aln = overhangTrim( $new_aln, $id1 );
+        $new_aln = overhangTrim( $new_aln, $id2 );
     }
 
     return sprintf "%.3f", $new_aln->overall_percentage_identity('align');
@@ -776,8 +868,9 @@ sub consensus_position {
     if ( $number_of_sequences == $letters{"X"} ) {
         return $letter;
     }
-    my $threshold = ( $number_of_sequences - $letters{"X"} ) * $threshold_pct / 100.;
-    my $count     = -1;
+    my $threshold =
+      ( $number_of_sequences - $letters{"X"} ) * $threshold_pct / 100.;
+    my $count = -1;
 
     my @possible_letters;    # collect letters of same high score
     foreach my $key ( sort keys %letters ) {
@@ -857,18 +950,28 @@ sub align_fragments {
     my $fragments = shift;
 
     my ( $fh_a, $msa_file ) = tempfile();
-    my $align_io = Bio::AlignIO->new( -file => ">" . $msa_file, -format => 'fasta' );
+    my $align_io =
+      Bio::AlignIO->new( -file => ">" . $msa_file, -format => 'fasta' );
     $align_io->write_aln($aln);
 
     my ( $fh_b, $fragments_file ) = tempfile();
-    my $frag_io = Bio::SeqIO->new( -file => ">" . $fragments_file, -format => 'fasta' );
+    my $frag_io =
+      Bio::SeqIO->new( -file => ">" . $fragments_file, -format => 'fasta' );
     for (@$fragments) {
         $frag_io->write_seq($_);
     }
 
+    my ( $fh_o, $output_file ) = tempfile();
+
     my $command =
-      "mafft --thread $opt{cpu} --addfragments $fragments_file $msa_file 2> /dev/null | ";
-    my $combined = Bio::AlignIO->new( -file => $command, -format => 'fasta' );
+      "mafft --thread $opt{cpu} --addfragments $fragments_file $msa_file > $output_file 2> /dev/null  ";
+    system($command);
+
+    my $combined =
+      Bio::AlignIO->new( -file => $output_file, -format => 'fasta' );
+
+    #my $combined = Bio::SeqIO->new(-file => $output_file, -format => 'fasta');
+
     unless ($combined) {
         print "# Error executing:\n";
         print "# \t$command\n";
@@ -880,10 +983,12 @@ sub align_fragments {
     }
     my $alignment = $combined->next_aln;
 
-    unless ($alignment) {
-        die "Sequences for scaffolding could not be aligned. Check path and workability of mafft.\n";
-    }
+    #print Dumper $alignment;
 
+    unless ($alignment) {
+        die
+          "Sequences for scaffolding could not be aligned. Check path and workability of mafft.\n";
+    }
 
     return $alignment;
 }
@@ -919,6 +1024,102 @@ sub sortAlignment {
 sub Bio::SimpleAlign::length_flushed {
     my $self = shift;
     return $self->get_seq_by_pos(1)->length;
+}
+
+sub Bio::AlignIO::fasta::next_aln {
+    my $self = shift;
+    my ($width) = $self->_rearrange( [qw(WIDTH)], @_ );
+    $self->width( $width || 60 );
+
+    my (
+        $start, $end,      $name,     $seqname, $seq,  $seqchar,
+        $entry, $tempname, $tempdesc, %align,   $desc, $maxlen
+    );
+    my $aln = Bio::SimpleAlign->new();
+
+    while ( defined( $entry = $self->_readline ) ) {
+        chomp $entry;
+        if ( $entry =~ s/^>\s*(\S+)\s*// ) {
+            $tempname = $1;
+            chomp($entry);
+            $tempdesc = $entry;
+            if ( defined $name ) {
+                $seqchar =~ s/\s//g;
+                if ( $name =~ /(\S+)\/(\d+)-(\d+)/ ) {
+                    $seqname = $1;
+                    $start   = $2;
+                    $end     = $3;
+                } else {
+                    $seqname = $name;
+                    $start   = 1;
+                    $end     = $self->_get_len($seqchar);
+                }
+
+                $seq = Bio::LocatableSeq->new(
+                    '-seq'         => $seqchar,
+                    '-display_id'  => $seqname,
+                    '-description' => $desc,
+                    '-start'       => $start,
+                    '-end'         => $end,
+                    '-alphabet'    => $self->alphabet,
+                );
+                $aln->add_seq($seq);
+                $self->debug("Reading $seqname\n");
+            }
+            $desc    = $tempdesc;
+            $name    = $tempname;
+            $desc    = $entry;
+            $seqchar = "";
+            next;
+        }
+
+        # removed redundant symbol validation
+        # this is already done in Bio::PrimarySeq
+        $seqchar .= $entry;
+    }
+
+    #  Next two lines are to silence warnings that
+    #  otherwise occur at EOF when using <$fh>
+    $name    = "" if ( !defined $name );
+    $seqchar = "" if ( !defined $seqchar );
+    $seqchar =~ s/\s//g;
+
+    #  Put away last name and sequence
+    if ( $name =~ /(\S+)\/(\d+)-(\d+)$/ ) {
+        $seqname = $1;
+        $start   = $2;
+        $end     = $3;
+    } else {
+        $seqname = $name;
+        $start   = 1;
+        $end     = $self->_get_len($seqchar);
+    }
+
+    # This logic now also reads empty lines at the
+    # end of the file. Skip this is seqchar and seqname is null
+    unless ( length($seqchar) == 0 && length($seqname) == 0 ) {
+        $seq = Bio::LocatableSeq->new(
+            -seq         => $seqchar,
+            -display_id  => $seqname,
+            -description => $desc,
+            -start       => $start,
+            -end         => $end,
+            -alphabet    => $self->alphabet,
+        );
+        $aln->add_seq($seq);
+        $self->debug("Reading $seqname\n");
+    }
+    my $alnlen = $aln->length;
+    foreach my $seq ( $aln->each_seq ) {
+        if ( $seq->length < $alnlen ) {
+            my ($diff) = ( $alnlen - $seq->length );
+            $seq->seq( $seq->seq() . "-" x $diff );
+        }
+    }
+
+    # no sequences means empty alignment (possible EOF)
+    return $aln if $aln->num_sequences;
+    return;
 }
 
 1;
