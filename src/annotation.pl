@@ -123,6 +123,10 @@ use Bio::Seq;
 use Bio::SeqIO;
 use Bio::SimpleAlign;
 use Bio::Tools::Genscan;
+use Bio::Taxon;
+
+
+
 
 use constant TDATE => uc( strftime "%d-%b-%Y", localtime );
 
@@ -162,6 +166,7 @@ my %DIVISION = (
     'Phages'        => "PHG",
     'Unassigned'    => "UNA",
     'Bacteria'      => "BCT",
+    'UNKNOWN'       => "UNK"
 );
 
 if ( @ARGV == 0 ) {
@@ -217,19 +222,13 @@ for (@mandatory_parameter) {
 }
 
 my @missing_files;
-
 push @missing_files, "Assignment table not found."
   unless ( -e $opt{assignment} );
-
 push @missing_files, "Reference transcriptome not found."
   unless ( -e $opt{reference} );
-
-push @missing_files, "Trinity output not found."
-  unless ( -e $opt{trinity} );
-
+push @missing_files, "Trinity output not found." unless ( -e $opt{trinity} );
 push @missing_files, "Blast results for CDS annotation not found."
   unless ( -e $opt{blast} );
-
 if ( $opt{'clipping'} ) {
     push @missing_files, "Hash containing path to readfiles not found."
       unless ( -e $opt{'read-index'} );
@@ -268,24 +267,20 @@ my $quiet = 0;
 # TAXON OBJECTS
 my ( $taxon, $taxon_id, $taxon_name, $division ) =
   getTaxon( $opt{'taxon-assemble'} );
-
 my ( undef, undef, $orth_taxon_name, undef ) =
   getTaxon( $opt{'taxon-ortholog'} );
-
 $orth_taxon_name =~ s/\s/_/g;
 
 # READING/INDEXING INPUT FILES
 print "Reading reference genbank\n" if ( !$quiet );
 my $db_orth =
   GenbankHelper::getIndex( $opt{reference}, -reindex => $opt{reindex} );
-die("\nError during indexing of: $opt{reference}\n\n")
-  unless ($db_orth);
+die("\nError during indexing of: $opt{reference}\n\n") unless ($db_orth);
 
 print "Reading trinity contigs\n" if ( !$quiet );
 my $db_trinity =
   Bio::DB::Fasta->new( $opt{trinity}, -reindex => $opt{reindex} );
-die("\nError during indexing of: $opt{trinity}\n\n")
-  unless ($db_trinity);
+die("\nError during indexing of: $opt{trinity}\n\n") unless ($db_trinity);
 
 print "Reading blast result for CDS annotation\n" if ( !$quiet );
 my $blast_all = getBlastHash( $opt{blast} );
@@ -307,8 +302,7 @@ if ( exists $opt{'ortholog-table'} ) {
     print "Indexing ortholog CDS fasta\n" if ( !$quiet );
     $ortholog_table_db =
       Bio::DB::Fasta->new( $opt{'ortholog-cds'}, -reindex => $opt{reindex} );
-    die("\nError reading ortholog table.\n\n") 
-      unless ($ortholog_table_db);
+    die("\nError reading ortholog table.\n\n") unless ($ortholog_table_db);
 }
 
 my $component2readfile;
@@ -327,9 +321,7 @@ if ( exists $opt{'tgicl'} ) {
 # SUBSET OF ORTHOLOGS/TRANSCRIPTS ONLY
 
 # provided by argument
-my %contigs_only = map { $_ => 1 } split ",", $opt{contig} 
-  if ( $opt{contig} );
-
+my %contigs_only = map { $_ => 1 } split ",", $opt{contig} if ( $opt{contig} );
 my %orthologs_only = map { $_ => 1 } split ",", $opt{ortholog}
   if ( $opt{ortholog} );
 
@@ -386,7 +378,6 @@ my $t1 = Benchmark->new();
 
 print "Processing $count transcripts took  "
   . timestr( timediff( $t1, $t0 ) ) . "\n";
-
 &combine;
 
 sub combine {
@@ -652,16 +643,28 @@ sub process {
     my $description =
       "$taxon_name ($obj{orth_sym}) " . $obj{orth_seq}->molecule;
 
-    my $annotated_contig = Bio::Seq::RichSeq->new(
-        -seq              => $obj{contig_seq}->seq,
-        -id               => $accession,
-        -accession_number => $accession,
-        -division         => $division,
-        -molecule         => $obj{orth_seq}->molecule,
-        -dates            => TDATE,
-        -species          => $taxon,
-        -desc             => $description
-    );
+    my $annotated_contig;
+    if ($taxon) {
+        $annotated_contig = Bio::Seq::RichSeq->new(
+            -seq              => $obj{contig_seq}->seq,
+            -id               => $accession,
+            -accession_number => $accession,
+            -division         => $division,
+            -molecule         => $obj{orth_seq}->molecule,
+            -dates            => TDATE,
+            -desc             => $description
+        );
+    } else {
+        $annotated_contig = Bio::Seq::RichSeq->new(
+            -seq              => $obj{contig_seq}->seq,
+            -id               => $accession,
+            -accession_number => $accession,
+            -division         => $division,
+            -molecule         => $obj{orth_seq}->molecule,
+            -dates            => TDATE,
+            -desc             => $description
+        );
+    }
 
     print "Adding features...\n" if ($debug);
 
@@ -698,9 +701,9 @@ sub indexTGICL {
         open my $fh, "<", $file or die "Can't open file for reading: $file\n";
         while (<$fh>) {
             chomp;
-            if (/^CL(\d+)Contig(\d+)/) {
-                my @elements = split "\t", $_;
-                my $clusterid = shift @elements;
+            if (/^(CL\d+Contig\d+)\t(.+)/) {
+                my @elements = split ",", $2;
+                my $clusterid = $1;
                 my %components;
                 for (@elements) {
                     $components{$1} = 1 if (/^(.+?)[\._]/);
@@ -780,6 +783,7 @@ sub performClipping {
     my $output_genscan =
       catfile( $obj->{transcript_dir}, "3UTR_annotation.csv" );
     my $output_clip = catfile( $obj->{transcript_dir}, "3UTR_sumscore.txt" );
+    my $output_clip_err = catfile( $obj->{transcript_dir}, "3UTR.err" );
 
     my $orth_file   = catfile( $obj->{transcript_dir}, "3UTR_ortholog.fa" );
     my $contig_file = catfile( $obj->{transcript_dir}, "3UTR_contig.fa" );
@@ -873,11 +877,11 @@ sub performClipping {
             UTR_LENGTH,
             "-output_dir",
             catdir( $obj->{transcript_dir}, "3UTR" ),
-            "-output $output_clip",
             "-prefix 3UTR"
         );
         push @command, "-debug" if ($debug);
-        push @command, "> $output_clip";
+        push @command, "1> $output_clip";
+        push @command, "2> $output_clip_err";
 
         my $failed = system( join " ", @command );
         if ($failed) {
@@ -1371,29 +1375,22 @@ sub getTaxon {
     #
     # Taxonomy currently requires internet connection.
     #
-    #
-    my $dbh = Bio::DB::Taxonomy->new(
-        -source    => 'flatfile',
-        -directory => '/misc/enton/data/mbens/tmp/taxon',
-        -nodesfile => '/gsc/biodb/ncbi/taxonomy/nodes.dmp',
-        -namesfile => '/gsc/biodb/ncbi/taxonomy/names.dmp'
-    ) || die "Can't open taxdb: $!";
 
-    #my $dbh;
-    #eval {
-    #    $dbh = Bio::DB::Taxonomy->new(-source => 'entrez');
-    #};
-    #if ($@) {
-    #    die "ERROR: Failed to connect to taxonomy database. No internet access?\n";
-    #}
-    my $taxon = $dbh->get_taxon( -taxonid => $id );
-    my ( $taxon_id, $taxon_name, $divison ) = ( $id, "UNKNOWN", "UNKNOWN" );
-    if ($taxon) {
+    my $dbh;
+    my ($taxon, $taxon_id, $taxon_name, $division) = (undef, $id, "UNKOWN", "UNKNOWN");
+    eval {
+        $dbh = Bio::DB::Taxonomy->new(-source => 'entrez');
+        $taxon = $dbh->get_taxon( -taxonid => $id );
+    };
+    if ($@) {
+        print STDERR "WARNING: Failed to connect to taxonomy database. No internet access?\n";
+    } 
+    unless ($taxon) {
+        print STDERR "WARNING: Could not retrieven taxon information for ID: $id\n";
+    } else {
         $taxon_id   = $taxon->id;
         $taxon_name = $taxon->scientific_name;
         $division   = $taxon->division;
-    } else {
-        die "\nERROR: Could not retrieve taxon for ID: $id\n\n";
     }
     return ( $taxon, $taxon_id, $taxon_name, $DIVISION{$division} );
 }
@@ -1457,6 +1454,7 @@ sub getScaffoldFragments {
 
     return $hash;
 }
+
 
 1;
 
