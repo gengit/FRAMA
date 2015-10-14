@@ -35,6 +35,9 @@ Separate sequences by sequence of characters.
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use Data::Dumper;
 use Pod::Usage;
@@ -57,8 +60,8 @@ GetOptions(
 pod2usage(1) if $help;
 pod2usage( -verbose => 2 ) if $man;
 
-unless ( -e $file ) {
-    die "\n\tFile not found: $file\n\n";
+if ( -z $file ) {
+    die "\n\tFile not found or empty: $file\n\n";
 }
 
 unless ($output) {

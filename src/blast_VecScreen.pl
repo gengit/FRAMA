@@ -36,6 +36,9 @@ blast parameter
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use File::Basename;
 use Data::Dumper;
@@ -56,7 +59,7 @@ GetOptions(
     'sequences=s' => \$seq_file,
     'database=s'  => \$database,
     'cpu=i'       => \$cpus,
-    'ncbi'        => \$ncbi,
+    'ncbi=i'        => \$ncbi,
     'outstem=s'   => \$outstem,
     'help|?'      => \$help,
     'man|m'       => \$man
@@ -75,8 +78,9 @@ unless ($outstem) {
 }
 
 if ($ncbi) {
+    my $command = "blastall -i $seq_file -d UniVec_Core -a 8 -p blastn -q -5 -G 3 -E 3 -F \"m D\" -e 700 -Y 1.75e12 -o $blast_file &> $blast_file.log";
     system(
-"blastall -i $seq_file -d UniVec_Core -a 8 -p blastn -q -5 -G 3 -E 3 -F \"m D\" -e 700 -Y 1.75e12 -o $blast_file &> $blast_file.log"
+        $command
     );
 } else {
     system(

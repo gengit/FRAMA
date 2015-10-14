@@ -9,34 +9,23 @@ Martin Bens, bensmartin@gmail.com
 
 =head1 DESCRIPTION
 
-Replaces content of column with mappings defined in second file.
+Replaces content of column in Table1 by assignments in Table2.
 
 Example:
 
-Table1
-A	1
-B	2
-B	3
-C	4
-
-Tabl2
-A	Z
-B	Y
-C	X
-
-Result
-Z	1
-Y	2
-Y	3
-X	4
-
+    Table1       Table2      Result   
+    | A | 1 |    | A | Z |   | Z | 1 |
+    | B | 2 |    | B | Y |   | Y | 2 |
+    | B | 3 |    | C | X |   | Y | 3 |
+    | C | 4 |                | X | 4 |
+    
 =head1 OPTIONS
 
 =over 8
 
 =item B<-table1> tab-sep
 
-This is the table with the column to be replaced. 
+Table with column to be replaced.
 
 =item B<-table2> tab-sep
 
@@ -44,24 +33,23 @@ Table with replacements.
 
 =item B<-column> num
 
-Column to replace (in table1).
+Select column to be replaced in table1 by number (1-based).
 
 =item B<-tkey> num
 
-Column which matches identifiers in table1.
+Select column in table2 containing the IDs corresponding to IDs in table2 by number (1-based).
 
 =item B<-tvalue> num
 
-Column with replacement for table1.
+Select column in table2 with replacements by number (1-based).
 
 =item B<-add>
 
-Adds additional column.
+Adds column to table1 instead of replacing values.
 
 =item B<-NA> 
 
 Use "NA" if no replacement was found (otherwise keeps value).
-
 
 =cut
 
@@ -97,9 +85,7 @@ GetOptions(
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
-$col1--;
-$tkey--;
-$tvalue--;
+$col1--; $tkey--; $tvalue--;
 
 my %mapping;
 open my $fh, "<", $table2 or die "Can't open file: $table2\n";
@@ -125,6 +111,7 @@ while (<$fh>) {
             $c_replace = "NA";
         } elsif (not defined $c_replace) {
             $c_replace = $e[$col1];
+            print STDERR "Replacement for $e[$col1] not found!\n";
         }
 
         #$c_replace = $e[$col1] unless ($c_replace);

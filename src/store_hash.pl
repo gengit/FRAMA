@@ -48,7 +48,6 @@ use Pod::Usage;
 use Storable;
 use Data::Dumper;
 
-use Getopt::Long;
 pod2usage(-message => "\n\tNo arguments\n", -verbose => 1) if (@ARGV == 0);
 
 my $man  = 0;

@@ -36,7 +36,7 @@ Format:
 
 =over 8
 
-=item B<-blast>
+=item B<-input>
 
 WU-Blast result in table format with topcombo and links column.
 
@@ -58,6 +58,9 @@ Output file (default: STDOUT)
 
 use strict;
 use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
 
 use Getopt::Long;
 use Data::Dumper;
@@ -83,7 +86,7 @@ my $help = 0;
 
 my ($file_blast, $file_query, $file_target, $output);
 GetOptions(
-    'blast=s'            => \$file_blast,
+    'input|i=s'          => \$file_blast,
     'length-query|lq=s'  => \$file_query,
     'length-target|lt=s' => \$file_target,
     'output|o=s'         => \$output,

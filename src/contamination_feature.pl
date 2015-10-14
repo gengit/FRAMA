@@ -34,15 +34,15 @@ CSV as produced by vecscreen.pl
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use File::Basename;
 use Data::Dumper;
 use Pod::Usage;
 
 use Bio::SeqIO;
-
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 
 pod2usage(-message => "\n\tNo arguments\n", -verbose => 1) if (@ARGV == 0);
 

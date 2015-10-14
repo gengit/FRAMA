@@ -81,6 +81,9 @@ successfull prediction)
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use File::Basename;
 use Data::Dumper;
@@ -93,8 +96,6 @@ use Bio::AlignIO;
 use Bio::DB::Fasta;
 use Bio::Tools::Genscan;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 use StringHelper;
 
 use Bio::Tools::CodonTable;
@@ -736,10 +737,12 @@ sub getLocation {
 }
 
 sub getCDSbyLongestOrf {
+    my ($out_fh, $output_file) = tempfile(UNLINK => 1);
     my $command =
-      "cat $opt{contig} | getorf -filter -auto -find 2 -noreverse | sizeseq -filter -desc | seqret -filter -first |";
+      "cat $opt{contig} | getorf -filter -auto -find 2 -noreverse | sizeseq -filter -desc | seqret -filter -first > $output_file";
+    system($command);
 
-    my $orf = Bio::SeqIO->new(-file => $command)->next_seq;
+    my $orf = Bio::SeqIO->new(-file => $output_file)->next_seq;
     unless ($orf) {
         warn("EMBOSS failed.");
         return;

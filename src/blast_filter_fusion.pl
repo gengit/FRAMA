@@ -75,11 +75,14 @@ Minimum size of transcript which shows no overlap.
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use File::Basename;
 use Data::Dumper;
+
 use Bio::Range;
-use List::Util qw(max);
 
 use constant QUERY_ID     => 0;
 use constant TARGET_ID    => 1;
@@ -254,7 +257,7 @@ sub process {
         my $sbh_length = $lq{$_->[QUERY_ID]};
         die "Length of $_->[QUERY_ID] not found!" unless ($sbh_length);
 
-        my $allowed_overlap = int(($thr_overlap * max($bbh_length, $sbh_length)) + 0.5);
+        my $allowed_overlap = int(($thr_overlap * getMax($bbh_length, $sbh_length)) + 0.5);
 
         if ($common <= $allowed_overlap) {
             my $found = 0;
@@ -314,8 +317,17 @@ sub Bio::Range::overlap_extend {
     }
 }
 
+sub getMax {
+    my ($x, $y) = @_;
+
+    if ($x > $y) { 
+        return $x 
+    } else { 
+        return $y
+    }
+}
+
 1;
 
 __END__
-
 

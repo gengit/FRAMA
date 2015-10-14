@@ -17,7 +17,7 @@
 #require(reshape, quietly = T, warn.conflicts = F)
 #require(ggplot2, quietly = T, warn.conflicts = F)
 
-packages = c("ggplot2", "plyr", "reshape", "gridExtra")
+packages = c("ggplot2", "plyr", "reshape", "gridExtra", "grid")
 for (i in packages) {
     if(i %in% installed.packages() == FALSE) {
         # lib="../lib/R/packages?"
@@ -318,19 +318,19 @@ final.df$genes = as.numeric(final.df$genes)
 
 tG1<-tableGrob(
               format(final.df, big.mark = ","),
-              core.just="right",
-              col.just="right",
-              show.rownames = F,
-              h.even.alpha = 0,
-              gpar.rowtext = gpar(col="black", equal.width = TRUE, show.vlines = F, show.hlines = F, separator="grey")
+              #core.just="right",
+              #col.just="right",
+              #show.rownames = F,
+              #h.even.alpha = 0,
+              #gpar.rowtext = gpar(col="black", equal.width = TRUE, show.vlines = F, show.hlines = F, separator="grey")
 )
 tG2<-tableGrob(
               format(final.df1, big.mark = ","),
-              core.just="right",
-              col.just="right",
-              show.rownames = F,
-              h.even.alpha = 0,
-              gpar.rowtext = gpar(col="black", equal.width = TRUE, show.vlines = F, show.hlines = F, separator="grey")
+              #core.just="right",
+              #col.just="right",
+              #show.rownames = F,
+              #h.even.alpha = 0,
+              #gpar.rowtext = gpar(col="black", equal.width = TRUE, show.vlines = F, show.hlines = F, separator="grey")
 )
 
 grid.arrange(tG2, tG1, ncol = 2)
@@ -373,7 +373,7 @@ pie(completeness, labels = labels, main = "CDS completeness (best transcript per
 ######################################################################
 
 par(mfrow=c(1,2))
-comp = laply(order_prediction, function(possibleValue) { sum(sum.table$cds_prediction_tool == possibleValue) })
+comp = laply(order_prediction, function(possibleValue) { sum(as.character(sum.table$cds_prediction_tool) == possibleValue) })
 names(comp) = order_prediction
 labels = paste(names(comp), paste0("(", comp, ")"), sep = "\n")
 pie(comp, labels = labels, main = "CDS inference method (transcript)")

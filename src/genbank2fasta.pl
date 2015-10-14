@@ -8,13 +8,14 @@
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use Data::Dumper;
 use Bio::SeqIO;
 use Pod::Usage;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 use GenbankHelper;
 
 my $input;

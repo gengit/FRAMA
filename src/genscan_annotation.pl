@@ -49,6 +49,9 @@ Header line.
 
 =cut
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use Pod::Usage;
 use Bio::Tools::Genscan;
