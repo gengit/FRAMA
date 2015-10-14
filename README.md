@@ -1,3 +1,7 @@
+% FRAMA: From RNA-seq data to annotated mRNA assemblies - Manual
+% By Martin Bens
+% Jan. 3, 2015
+
 # Introduction
 
 FRAMA is a __transcriptome assembly and mRNA annotation pipeline__, which
@@ -79,6 +83,7 @@ Perl
     BioPerl
     Parallel::ForkManager
     Set::Intspan
+    FileHandle::Unget
 
 R
 
@@ -92,15 +97,19 @@ R
 
 ## Manual Installation
 
-For instance, on Ubuntu:
+For instance, on Ubuntu (15.04, Vivid Vervet) :
 
     sudo apt-get install perl default-jre r-base-core \
         ncbi-blast+ mafft emboss bowtie bowtie2 cd-hit \
-        bamtools samtools parallel
+        bamtools samtools parallel libc6-i386 build-essential \
+        bioperl libparallel-forkmanager-perl libset-intspan-perl \
+        libfilehandle-unget-perl r-cran-ggplot2 r-cran-plyr \
+        r-cran-reshape 
 
 Left to install manually:
 
-    Trinity, GENSCAN, Genblasta, RepeatMasker, TGICL
+* `Trinity, GENSCAN, Genblasta, RepeatMasker, TGICL`
+* R-packages: `gridExtra, annotate, GO, KEGG.db`
 
 ## Automatic Installation
 
@@ -114,6 +123,7 @@ prerequesites for `install.sh` include but are not limited to:
     ncurses >= 5 (libncurses5-dev)
     jre >= 1.7.0
     g++
+    libc6 (libc6-i386) # genscan, tgicl
 
 GENSCAN must be downloaded manually, due to licence restrictions.
 

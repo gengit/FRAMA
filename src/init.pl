@@ -26,163 +26,181 @@ Configuration file.
 use strict;
 use warnings;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use Getopt::Long;
 use FindBin;
 use Data::Dumper;
 use File::Spec;
 use Pod::Usage;
 
-use lib "$FindBin::Bin/../lib/perl";
+my %mandatory = (
+    "PATH_BAMTOOLS" => [ ["bamtools"] ],
+    "PATH_BOWTIE" => [ ["bowtie2"], ["bowtie2-build"] ],
 
-my %executables = (
-    "PATH_BAMTOOLS" => "bamtools",
-    "PATH_BOWTIE" => ["bowtie2", "bowtie2-build"],
-    "PATH_CD_HIT_EST" => "cd-hit-est",
-    "PATH_EMBOSS" => ["getorf", "needle"],
-    "PATH_GENSCAN" => "genscan",
-    "PATH_MAFFT" => "mafft",
-    "PATH_PERL" => "perl",
-    "PATH_REPEATMASKER" => "RepeatMasker",
-    "PATH_RSCRIPT" => "Rscript",
-    "PATH_SAMTOOLS" => "samtools",
-    "PATH_TGICL" => "tgicl",
-    "PATH_TRINITY" => "Trinity.pl",
-    "PATH_WUBLAST" => "blastn",
-    "PATH_XDFORMAT" => "xdformat",
-    "PATH_GENSCAN_MAT" => 0,
-    "PATH_BLAST" => "blastn"
+    # ubuntu binary different name: cdhit-est
+    "PATH_EMBOSS" => [ ["needle"], ["getorf"] ],
+    "PATH_MAFFT" => [ ["mafft"] ],
+    "PATH_SAMTOOLS" => [ ["samtools"] ],
+
+    # mac homebrew different name: Trinity
+    "PATH_BLAST" => [ [ "xdformat", "makeblastdb" ], ["blastn"] ],
+
+    # look for wublast or ncbiblast
+    "PATH_PERL"    => [ ["perl"] ],
+    "PATH_RSCRIPT" => [ ["Rscript"] ],
+    "PATH_GENSCAN" => [ ["genscan"] ],
+    "PATH_TRINITY" => [ [ "Trinity", "Trinity.pl" ] ],
 );
 
-die "Need configuration file\n" unless (@ARGV > 0);
+my %optional = (
+    "PATH_TGICL"        => [ ["tgicl"] ],
+    "PATH_CD_HIT_EST"   => [ [ "cd-hit-est", "cdhit-est" ] ],
+    "PATH_REPEATMASKER" => [ ["RepeatMasker"] ],
+);
+
+my %executables = ( %mandatory, %optional );
+my %dep1 = map { $_ => 1 } keys %mandatory;
+my %dep2 = map { $_ => 0 } keys %optional;
+my %dependence = ( %dep1, %dep2 );
+
+die "Need configuration file\n" unless ( @ARGV > 0 );
 my $file = $ARGV[0];
 
 my $missing = 0;
 
-# check perl modules
+# check perl modules --> TODO: cpanfile
 my @output = `grep "^use " $FindBin::Bin/*.pl`;
-my @modules =  grep {!/constant/ && !/lib/ && !/warnings;/ && !/strict;/} @output;
+my @modules =
+  grep { !/constant/ && !/lib/ && !/warnings;/ && !/strict;/ } @output;
 for (@modules) { /.+:use\s(.+?)(\s|;)/; $_ = $1; }
 my %modules = map { $_ => 1 } @modules;
 
 for ( sort keys %modules ) {
     next if (/^\d/);
     eval "require $_";
-    if ($@) { print "FAILED: $_\n"; $missing = 1;
-    } else { print "OK: $_\n"; }
+    if ($@) {
+        print "FAILED: $_\n";
+        $missing = 1;
+    }
 }
 
 # check software
 my %visited = map { $_ => 0 } keys %executables;
-my %paths_to_executables; 
 
-my %paths;
-my $stop = 0;
-open my $fh, "<", $file or die $!;
-while (<$fh>) {
-    chomp;
+#open my $fh, "<", $file or die $!;
+#while (<$fh>) {
+#    chomp;
+#
+#    next if (/^#/);
+#
+#    if (/^(.+?)\s*:=\s*(.+?)$/) {
+#        my $variable = $1;
+#        my $value    = $2;
+#
+#        if ( defined $value ) {
+#            $value =~ s/\s+//g;
+#            if ( length($value) == 0 ) {
+#                $value = 0;
+#            } else {
+#                $value = File::Spec->rel2abs($value);
+#            }
+#        }
+#
+#        $visited{$variable} = $value;
+#    }
+#}
+#close $fh;
 
-    next if (/^#/);
+while ( my ( $variable, $value ) = each(%visited) ) {
+    if ( $variable =~ /^REF_/ ) {
+        $missing += checkFile($value);
+    } elsif ( $variable =~ /^PATH_GENSCAN_MAT/ ) {
+        $missing += checkFile($value);
+    } elsif ( $variable =~ /^ORTHOLOG_/ ) {
+        $missing += checkFile($value);
+    } elsif ( $variable =~ /^PATH_/ ) {
+        $missing += checkExecutable( $variable, $value );
+    }
+}
 
-    if (/^(PATH.+?)\s+?:=\s+?(.+?)$/) {
-        my $variable = $1;
-        $visited{$variable} = 1;
-        unless (exists $executables{$variable}) {
-            print "FAILED: Unkown variable: $variable.\n";
-            $missing = 1; next;
-        }
+die "\nPlease check mandatory required software, modules and files!\n\n"
+  if ($missing);
 
-        my $path = $2;
-        $path =~ s/\s+//g;
+sub checkFile {
+    my ($file) = @_;
+    $file =~ s/\s+$//g;
 
-        my $exe = $executables{$variable};
-        if (length($exe) == 1) {
-            if (-e $path) {
-                print "OK: $variable\n";
+    unless ( -e $file ) {
+
+        print "FAILED: $file not found\n";
+        return 1;
+    }
+
+    return 0;
+}
+
+sub checkExecutable {
+    my ( $variable, $path ) = @_;
+
+    # ignore unknown variables but give warning
+    unless ( exists $executables{$variable} ) {
+        print "FAILED: [unknown variable] $variable\n";
+        return 0;
+
+        #$missing = 1; next;
+    }
+
+    my $programs = $executables{$variable};
+
+    for my $program_options (@$programs) {
+
+        my $failed = 0;
+        for my $program (@$program_options) {
+            my $exe;
+            if (length($program) == 0) {
+                $exe = $path
             } else {
-                print "FAILED: $variable\n";
-                $missing = 1; 
+                $exe = $program;
+                $exe = File::Spec->catfile( $path, $program ) if ($path);
             }
-            next;
-        }
-        $path .= "/" unless ($path =~ /\/$/);
 
-        if (ref($exe) eq "ARRAY") {
-            for my $e (@$exe) {
-                my $executable = File::Spec->catfile($path, $e) if (length($path));
-                test($executable);
-                $paths_to_executables{$variable} = $executable;
+            unless ( executable($exe) ) {
+                $failed++;
             }
-        } else {
-            my $executable = File::Spec->catfile($path, $exe) if (length($path));
-            test($executable);
-            $paths_to_executables{$variable} = $executable;
         }
-    }
-    if (/^(REF.+)\s*:=\s*(.+?)$/) {
-        my $file = $2;
-        $file =~ s/\s+//g;
-        next unless (length($file) > 0);
-        if (-e $file) {
-            print "OK: $file\n";
-        } else {
-            print "FAILED: $file not found\n";
-            $missing = 1;
-        }
-    }
-    if (/^ORTHOLOG_TABLE\s*:=\s*(.+?)$/) {
-        my $file = $1;
-        $file =~ s/\s+//g;
-        next unless (length($file) > 0);
-        if (-e $file) {
-            print "OK: $file\n";
-        } else {
-            print "FAILED: $file not found\n";
-            $missing = 1; 
-        }
-    }
-    if (/^ORTHOLOG_CDS\s*:=\s*(.+?)$/) {
-        my $file = $1;
-        $file =~ s/\s+//g;
-        next unless (length($file) > 0);
-        if (-e $file) {
-            print "OK: $file\n";
-        } else {
-            print "FAILED: $file not found\n";
-            $missing = 1; 
-        }
-    }
-}
-close $fh;
 
-for (keys %visited) {
-    next if  ($visited{$_}); 
-    if ((ref $executables{$_}) =~ /ARRAY/) {
-        for my $executable (@{$executables{$_}}) { test($executable); $paths_to_executables{$_} = $executable}
-    } else {
-        test($executables{$_});
-        $paths_to_executables{$_} = $executables{$_};
+        if ( $failed == scalar @$program_options ) {
+            if ( $dependence{$variable} ) {
+                print "FAILED: [mandatory] $variable\n";
+            } else {
+                print "FAILED: [optional] $variable\n";
+            }
+            print "\tPATH: $path\n";
+            return ( $dependence{$variable} );
+        }
     }
+    return 0;
 }
 
-die "\nPlease install required software and modules!\n\n" if ($missing); 
-
-sub test {
-    my $command = shift;
-    unless ($command) {
-        print "Not going to do that..\n";
-        return;
-    }
+sub executable {
+    my ($command) = @_;
     my $failed = `command -v "$command"`;
     chomp($failed);
-    unless ($failed) {
-        print "FAILED: $command $failed\n";
-        $missing = 1;
-    } else {
-        print "OK: $command\n";
+
+    # command -v returns path if found
+    if ($failed) {
+        return 1;
     }
+    return 0;
 }
 
 1;
 
 __END__
+
+
+
+
 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+wget_options="-q"
+bar="############################################################"
+
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do 
     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -8,15 +11,11 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-install_perl() {
-
-printf "\n\nInstalling R-packages in personal library..."
-
-}
-
 install_R() {
 
-printf "\n\nInstalling R-packages in personal library..."
+printf "\n$bar\n"
+printf "Installing R-packages in personal library...\n"
+printf "$bar\n\n"
 
 R --vanilla --slave <<END
 
@@ -42,11 +41,22 @@ END
 
 }
 
+
+print_stuff() {
+    printf "\nGetting $1 ...\n"
+}
+
 install_software() {
 
-DIR=$DIR/bin_external
-
+DIR=$DIR/bin
 mkdir -p $DIR && cd $DIR
+
+
+PATH=$(find $DIR -type d -printf "%p:")$PATH
+
+printf "\n$bar\n"
+printf "Installing software in $DIR\n"
+printf "$bar\n"
 
 BLAST="ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.2.31+-x64-linux.tar.gz"
 RMBLAST="ftp://ftp.ncbi.nlm.nih.gov/blast/executables/rmblast/LATEST/ncbi-rmblastn-2.2.28-x64-linux.tar.gz"
@@ -64,12 +74,12 @@ PARALLEL="http://ftp.gnu.org/gnu/parallel/parallel-20150922.tar.bz2"
 EMBOSS="http://science-annex.org/pub/emboss/EMBOSS-6.6.0.tar.gz"
 CDHIT="https://github.com/weizhongli/cdhit/releases/download/V4.6.4/cd-hit-v4.6.4-2015-0603.tar.gz"
 
-printf "\n\nInstalling software in $DIR\n"
+UNIVEC="ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec_Core"
 
 BLAST_BIN=""
 if [[ ! $(which blastn 2> /dev/null) ]]; then
-    echo -e "--> Downloading NCBI-BLAST\n\n\t$BLAST\n"
-    wget --ftp-user=anonymous --ftp-password=anonymous $BLAST
+    print_stuff "NCBI-BLAST"
+    wget $wget_options --ftp-user=anonymous --ftp-password=anonymous $BLAST
     tar zxf ncbi-blast-2.2.31+-x64-linux.tar.gz 
     rm ncbi-blast-2.2.31+-x64-linux.tar.gz
     BLAST_BIN=$(readlink -f ncbi-blast-2.2.31+/bin)
@@ -80,9 +90,26 @@ else
     BLAST_BIN=$(dirname $(which blastn))
 fi
 
+
+if [[ ! -e $BLASTDB/UniVec_Core ]]; then
+    print_stuff "UniVec"
+    wget $wget_options --ftp-user anonymous --ftp-password anonymous $UNIVEC
+    mkdir -p blastdb
+    mv UniVec_Core blastdb/.
+
+    if [[ $(which makeblastdb 2> /dev/null) ]]; then
+        cd blastdb && makeblastdb -in UniVec_Core -dbtype 'nucl' &> /dev/null && cd ..
+    fi
+    if [[ $(which xdformat 2> /dev/null) ]]; then
+        cd blastdb && xdformat -n UniVec_Core &> /dev/null && cd ..
+    fi
+fi
+
+installedRepMask=0
 if [[ ! $(which RepeatMasker 2> /dev/null) ]]; then
-    echo -e "--> Downloading RMBLAST\n\n\t$RMBLAST\n"
-    wget --ftp-user=anonymous --ftp-password=anonymous $RMBLAST
+    installedRepMask=1
+    print_stuff "RMBLAST"
+    wget $wget_options --ftp-user=anonymous --ftp-password=anonymous $RMBLAST
     tar zxf ncbi-rmblastn-2.2.28-x64-linux.tar.gz 
     rm ncbi-rmblastn-2.2.28-x64-linux.tar.gz
 
@@ -91,7 +118,7 @@ if [[ ! $(which RepeatMasker 2> /dev/null) ]]; then
     ln -s $BLAST_BIN/blastx $RMBLAST_BIN/blastx
     ln -s $BLAST_BIN/makeblastdb $RMBLAST_BIN/makeblastdb
 
-    echo -e "--> Downloading Tandem Repeat Finder\n\n\t$TRF\n"
+    print_stuff "Tandem Repeat Finder"
     cat <<EOF
     Tandem Repeats Finder License Terms
 
@@ -108,34 +135,34 @@ if [[ ! $(which RepeatMasker 2> /dev/null) ]]; then
 
 EOF
 
-    wget $TRF
+    wget $wget_options $TRF
     mv trf407b.linux64 trf && chmod +x trf
     TRF_BIN=$(readlink -f trf)
 
-    echo -e "--> Downloading RepeatMasker\n\n\t$REPEATMASKER\n"
-    wget $REPEATMASKER
+    print_stuff "RepeatMasker"
+    wget $wget_options $REPEATMASKER
     tar xzf RepeatMasker-open-4-0-5.tar.gz 
     rm RepeatMasker-open-4-0-5.tar.gz
     mv RepeatMasker RepeatMasker_4-0-5
 
     PERL_BIN=$(which perl)
     cd RepeatMasker_4-0-5 
-    echo -e "\n$PERL_BIN\n\n$TRF_BIN\n2\n$RMBLAST_BIN\nY\n5\n" | perl configure
+    printf "\n$PERL_BIN\n\n$TRF_BIN\n2\n$RMBLAST_BIN\nY\n5\n" | perl configure
     cd ..
 
     ln -s RepeatMasker_4-0-5/RepeatMasker .
 fi
 
 if [[ ! $(which tgicl 2> /dev/null) ]]; then
-    echo -e "--> Downloading TGICL\n\n\t$TGICL\n"
-    wget --ftp-user=anonymous --ftp-password=anonymous $TGICL
+    print_stuff "TGICL"
+    wget $wget_options --ftp-user=anonymous --ftp-password=anonymous $TGICL
     tar zxf tgicl_linux.tar.gz 
     rm tgicl_linux.tar.gz
 fi
 
 if [[ ! $(which bowtie 2> /dev/null) ]]; then
-    echo -e "--> Downloading Bowtie1\n\n\t$BOWTIE1\n"
-    wget $BOWTIE1
+    print_stuff "Bowtie1"
+    wget $wget_options $BOWTIE1
     mv download bowtie1.zip
     unzip -qq bowtie1.zip 
     rm bowtie1.zip
@@ -145,8 +172,8 @@ if [[ ! $(which bowtie 2> /dev/null) ]]; then
 fi
 
 if [[ ! $(which bowtie2 2> /dev/null) ]]; then
-    echo -e "--> Downloading Bowtie2\n\n\t$BOWTIE2\n"
-    wget $BOWTIE2
+    print_stuff "Bowtie2"
+    wget $wget_options $BOWTIE2
     mv download bowtie2.zip
     unzip -qq bowtie2.zip
     rm bowtie2.zip
@@ -156,8 +183,8 @@ if [[ ! $(which bowtie2 2> /dev/null) ]]; then
 fi
 
 if [[ ! $(which mafft 2> /dev/null) ]]; then
-    echo -e "--> Downloading MAFFT\n\n\t$MAFFT\n"
-    wget $MAFFT
+    print_stuff "MAFFT"
+    wget $wget_options $MAFFT
     tar zxf mafft-7.245-linux.tgz 
     rm mafft-7.245-linux.tgz
 
@@ -167,8 +194,8 @@ if [[ ! $(which mafft 2> /dev/null) ]]; then
 fi
 
 if [[ ! $(which genblasta 2> /dev/null) ]]; then
-    echo -e "--> Downloading GENBLASTA\n\n\t$GENBLASTA\n"
-    wget $GENBLASTA
+    print_stuff "GENBLASTA"
+    wget $wget_options $GENBLASTA
     chmod +x genblasta_v1.0.4_linux_x86_64
     mv genblasta_v1.0.4_linux_x86_64 genblasta
 fi
@@ -178,13 +205,13 @@ fi
 # --------------------------------------------------------------------
 
 if [[ ! $(which bamtools 2> /dev/null) ]]; then
-    echo -e "--> Downloading BamTools\n\n\t$BAMTOOLS\n"
-    wget $BAMTOOLS
+    print_stuff "BamTools"
+    wget $wget_options $BAMTOOLS
     mv v2.4.0.zip bamtools.zip
     unzip -qq bamtools.zip 
     rm bamtools.zip
     cd bamtools-2.4.0 
-    mkdir build
+    mkdir -p build
     cd build 
     cmake ..
     make 
@@ -194,20 +221,20 @@ if [[ ! $(which bamtools 2> /dev/null) ]]; then
 fi
 
 if [[ ! $(which cd-hit-est 2> /dev/null) ]]; then
-    echo -e "--> Downloading CD-HIT-EST\n\n\t$CDHIT\n"
-    wget $CDHIT
+    print_stuff "CD-HIT-EST"
+    wget $wget_options $CDHIT
     tar zxf cd-hit-v4.6.4-2015-0603.tar.gz
     rm cd-hit-v4.6.4-2015-0603.tar.gz
     cd cd-hit-v4.6.4-2015-0603 
     make 
     cd ..
 
-    ln -s cd-hit-v4.6.4-2015-0603/cd-hit-est .
+    ln -s cd-hit-v4.6.4-2015-0603/cd-hit-est cdhit-est
 fi
 
 if [[ ! $(which needle 2> /dev/null) ]]; then
-    echo -e "--> Downloading EMBOSS\n\n\t$EMBOSS\n"
-    wget $EMBOSS
+    print_stuff "EMBOSS"
+    wget $wget_options $EMBOSS
     tar zxf EMBOSS-6.6.0.tar.gz 
     rm -rf EMBOSS-6.6.0.tar.gz
     cd EMBOSS-6.6.0 && ./configure --without-x && make 
@@ -218,8 +245,8 @@ if [[ ! $(which needle 2> /dev/null) ]]; then
 fi
 
 if [[ ! $(which parallel 2> /dev/null) ]]; then
-    echo -e "--> Downloading Parallel\n\n\t$PARALLEL\n"
-    wget $PARALLEL 
+    print_stuff "Parallel"
+    wget $wget_options $PARALLEL 
     tar xfj parallel-20150922.tar.bz2 
     rm parallel-20150922.tar.bz2
     cd parallel-20150922 
@@ -232,8 +259,8 @@ if [[ ! $(which parallel 2> /dev/null) ]]; then
 fi
 
 if [[ ! $(which samtools 2> /dev/null) ]]; then
-    echo -e "--> Downloading SAMTOOLS\n\n\t$SAMTOOLS\n"
-    wget $SAMTOOLS
+    print_stuff "SAMTOOLS"
+    wget $wget_options $SAMTOOLS
     mv download samtools.tar.bz2
     tar xfj samtools.tar.bz2 
     rm samtools.tar.bz2
@@ -245,8 +272,8 @@ if [[ ! $(which samtools 2> /dev/null) ]]; then
 fi
 
 if [[ ! $(which Trinity.pl 2> /dev/null) ]]; then
-    echo -e "--> Downloading Trinity\n\n\t$TRINITY\n"
-    wget $TRINITY
+    print_stuff "Trinity"
+    wget $wget_options $TRINITY
     tar zxf v2.0.6.tar.gz 
     rm v2.0.6.tar.gz
     cd trinityrnaseq-2.0.6 
@@ -254,14 +281,45 @@ if [[ ! $(which Trinity.pl 2> /dev/null) ]]; then
     ln -s Trinity Trinity.pl
     cd ..
 fi
+
+
+if [[ $installedRepMask == 1 ]]; then
+
+printf "\n$bar\n"
+cat <<EOF
+RepeatMasker has been installed, but in order to use it you must download a
+repeat library and move it to bin/RepeatMasker_4-0-5/Libraries. 
+
+Repeat library: 
+    http://www.girinst.org/server/RepBase/
+
+Example:
+    cd bin/RepeatMasker_4-0-5/Libraries 
+    wget $wget_options --user=__USER__ --password=__PW__ http://www.girinst.org/server/RepBase/protected/repeatmaskerlibraries/repeatmaskerlibraries-20150807.tar.gz 
+    tar -xzf repeatMaskerlibraries-20150807.tar.gz
+    mv Libraries/* . && rm -rf Libraries
+EOF
+
+fi
+
+printf "\n$bar\n"
+cat <<EOF
+GENSCAN needs to be installed manually:
+
+    http://genes.mit.edu/license.html
+EOF
+
+printf "$bar\n"
+
+
 }
 
 clear
 
-printf "This script will install external software that requires (among others)
-cmake, zlib, ncurses, R and java. Please install these prerequesites beforehand
-(consult README.md).\n\n"
-printf "Are you ready to continue? [Y/n]\n"
+printf "This script requires the following prerequesites:
+cmake, zlib, ncurses, R and java (consult README.md).\n\n"
+
+printf "Are you ready to continue? [y/n]\n"
 read -n 1 continue
 printf "\n";
 
@@ -270,12 +328,10 @@ if [ "$continue" == "n" ]; then
     exit;
 fi
 
-printf "Do you want to install external software? [y/n]\n"
+printf "Install external software? [y/n]\n"
 read -n 1 external_software
-printf "\nDo you want to install R packages? [y/n]\n"
+printf "\nInstall R packages? [y/n]\n"
 read -n 1 R_packages
-printf "\nDo you want to install Perl modules? [y/n]\n"
-read -n 1 perl_modules
 printf "\n"
 
 if [ "$external_software" == "y" ]; then
@@ -284,9 +340,5 @@ fi
 
 if [ "$R_packages" == "y" ]; then
     install_R
-fi
-
-if [ "$perl_modules" == "y" ]; then
-    install_perl
 fi
 

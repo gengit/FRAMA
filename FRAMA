@@ -10,16 +10,18 @@ fi
 
 function execute {
     # note: make 4.0 does have output-sync to group output per target (about one year old)
-    # for now..just deal with possibly interleaved output for other versions
+    # for now..just deal with possibly interleaved output in other versions
+    cd $3 && make $1 FILE:=$2 info
+    if [ $? -ne 0 ]; then exit 1; fi
     cd $3 && make $1 FILE:=$2 check
     if [ $? -ne 0 ]; then exit 1; fi
-    cd $3 && make $1 -L FILE:=$2 trinity preprocess-assembly blast
+    cd $3 && make $1 -L FILE:=$2 assembly primary-processing blast
     if [ $? -ne 0 ]; then echo -e "\nPlease check error messages and consult log files.\n\n"; exit 1; fi
-    cd $3 && make $1 -j $CPUS $MAKE_OUTPUT -L FILE:=$2 blast-sum
+    cd $3 && make $1 -j $CPUS $MAKE_OUTPUT -L FILE:=$2 blast-summary
     if [ $? -ne 0 ]; then echo -e "\nPlease check error messages and consult log files.\n\n"; exit 1; fi
     cd $3 && make $1 -L FILE:=$2 annotation vector
     if [ $? -ne 0 ]; then echo -e "\nPlease check error messages and consult log files.\n\n"; exit 1; fi
-    cd $3 && make $1 -j $CPUS $MAKE_OUTPUT  -L FILE:=$2 fasta-conversion pipeline-stats functional
+    cd $3 && make $1 -j $CPUS $MAKE_OUTPUT -L FILE:=$2 fasta-conversion catalog-summary functional
     if [ $? -ne 0 ]; then echo -e "\nPlease check error messages and consult log files.\n\n"; exit 1; fi
 }
 
@@ -32,7 +34,7 @@ while [ -h "$SOURCE" ]; do
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-DIR=$(dirname $DIR)/src
+DIR=$DIR/src
 
 if [ -z "$1" ]
 then
@@ -83,3 +85,4 @@ case "$PARAMETER" in
         # assume further make parameter 
         execute $PARAMETER $CONFIG $DIR
 esac
+
