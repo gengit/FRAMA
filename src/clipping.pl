@@ -72,10 +72,12 @@ Otherwise, only clipping 3' end based on best score.
 
 =cut
 
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+
 use File::Temp qw(tempfile tempdir);
 use File::Path qw(make_path remove_tree);
 use File::Spec::Functions qw(catfile catdir splitpath);
-use FindBin;
 
 use Bio::SeqIO;
 use Bio::AlignIO;
@@ -289,13 +291,6 @@ my @utr_regions;
 
 my @sorted_keys = sort { $cds_range{$a}->{start} <=> $cds_range{$b}->{start} } keys %cds_range;
 
-my $out_fh;
-if (defined $opt{output}) {
-    open $out_fh, ">", $opt{output} or die $!;
-} else {
-    $out_fh = \*STDOUT;
-}
-
 print join "\t", "#strand", "prev_cds_end", "centerL", "centerR", "prom_start", "prom_end", "clip", "clipscore", "start", "end", "transcript", "gene";
 print "\n";
 
@@ -474,13 +469,24 @@ sub mRNA_featureSelection {
 sub covDrop {
     my ($args) = @_;
 
-    my $command = "bamtools coverage -in $args->{input} > $args->{cov}";
-    my $failed  = system($command);
-    unless ($failed) {
-        $command =
-          "cat $args->{cov} | $opt{PATH_POLYA}polyacov_dropcov_simple.pl - > $args->{drop} ";
-        $failed = system($command);
+    my $failed = 0;
+    unless (-z $args->{input} ) {
+
+        my $command = "bamtools coverage -in $args->{input} > $args->{cov}";
+
+        $failed  = system($command);
+        unless ($failed) {
+            $command =
+            "cat $args->{cov} | $opt{PATH_POLYA}polyacov_dropcov_simple.pl - > $args->{drop} ";
+            $failed = system($command);
+        } 
+    } else {
+        # subsequent scripts handle empty files
+        system("touch $args->{cov}");
+        system("touch $args->{drop}");
+        system("touch $args->{input}");
     }
+
     return $failed;
 }
 
@@ -605,10 +611,9 @@ sub alignBowtie {
     }
 
 
-    my $tempdir = tempdir (CLEANUP =>1);
+    my $tempdir = tempdir (CLEANUP => 1);
     my $bowtie_index = catfile($tempdir, "bowtie_index");
     my $sam = catfile($tempdir, "output");
-
 
     my $failed = system("bowtie2-build -q $args->{contig} $bowtie_index 2> /dev/null");
 
@@ -616,13 +621,6 @@ sub alignBowtie {
         print STDERR "Failed to build bowtie index. Skipping.\n";
         return 1;
     }
-
-    # TODO:
-    # bowtie2 has problems if reads supplied by FASTA start with '@'. This
-    # should be somehow moved to preprocessing of read input..which we do not
-    # have at the moment.. but would be advisable anyway, since we might want
-    # to support other assemblers someday
-    # quick and dirty for now
 
     my $reads = catfile($tempdir, "read_input");
 
@@ -634,27 +632,41 @@ sub alignBowtie {
             return 1;
         }
     }
+    my $command = "bowtie2 --gbar "
+    . BOWTIE_GBAR
+    . " --dpad "
+    . BOWTIE_DPAD
+    . " --no-unal --n-ceil C,0 --quiet -f --very-sensitive-local -p 1 -x $bowtie_index -U $reads -S $sam";
 
-    $failed =
-      system("bowtie2 --gbar "
-          . BOWTIE_GBAR
-          . " --dpad "
-          . BOWTIE_DPAD
-          #. " --no-unal --n-ceil C,0 --quiet -f --very-sensitive-local -p 1 -x $bowtie_index -U $opt{readfile} -S $sam")
-          . " --no-unal --n-ceil C,0 --quiet -f --very-sensitive-local -p 1 -x $bowtie_index -U $reads -S $sam")
-      unless ($failed);
+    $failed = system($command) unless ($failed);
 
     if ($failed) {
         print STDERR "Failed to align reads\n";
         return 1;
     }
 
-    $failed = system("samtools view -bS $sam > $sam.unsorted.bam 2> /dev/null") unless ($failed);
-    $failed = system("samtools sort $sam.unsorted.bam $args->{output}") unless ($failed);
-    $failed = system("samtools index $args->{output}.bam") unless ($failed);
+    my $aligned = 0 ;
+    open my $fh, "<", $sam or die "Can't open file for reading: $sam\n";
+    while(<$fh>) {
+        next if (/^@/);
+        $aligned++;
+        last;
+    }
+    close $fh;
 
-    if ($failed) {
-        print STDERR "Failed to convert SAM to BAM for\n";
+    if ($aligned == 0) {
+        print STDERR "No reads could be aligned\n";
+        system("rm $sam");
+    } else {
+
+        $failed = system("samtools view -bS $sam > $sam.unsorted.bam 2> /dev/null") unless ($failed);
+        $failed = system("samtools sort $sam.unsorted.bam $args->{output}") unless ($failed);
+        $failed = system("samtools index $args->{output}.bam") unless ($failed); 
+        if ($failed) {
+            print STDERR "Failed to convert SAM to BAM.\n";
+            return $failed;
+        }
+
     }
 
     return $failed;
