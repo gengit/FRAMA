@@ -1,7 +1,3 @@
-% FRAMA: From RNA-seq data to annotated mRNA assemblies - Manual
-% By Martin Bens
-% Jan. 3, 2015
-
 # Introduction
 
 FRAMA is a __transcriptome assembly and mRNA annotation pipeline__, which
@@ -15,7 +11,37 @@ RNA-seq data and a reference transcriptome, FRAMA performs 4 steps:
 
 Further details: [Unpublished]
 
-![Pipeline](doc/pipeline.png)
+
+- [Input](#input)
+- [Requirements](#requirements)
+  - [Bioinformatic Software](#bioinformatic-software)
+  - [Perl Modules](#perl-modules)
+  - [R Packages](#r-packages)
+- [Installation](#installation)
+  - [Manual Installation of external software](#manual-installation-of-external-software)
+  - [Automatic Installation of external software](#automatic-installation-of-external-software)
+- [Run](#run)
+- [Cleanup](#cleanup)
+- [Configuration](#configuration)
+  - [mandatory variables](#mandatory-variables)
+  - [optional](#optional)
+  - [Software parameter](#software-parameter)
+    - [Trinity](#trinity)
+    - [RepeatMasker](#repeatmasker)
+    - [CD-HIT-EST](#cd-hit-est)
+    - [TGICL](#tgicl)
+    - [misassembled contigs](#misassembled-contigs)
+    - [BLAST](#blast)
+    - [SBH requiremnts](#sbh-requiremnts)
+    - [Scaffolding](#scaffolding)
+    - [CDS prediction](#cds-prediction)
+- [Output files](#output-files)
+  - [important files](#important-files)
+    - [functional annotations (based on reference)](#functional-annotations-based-on-reference)
+  - [intermediate output](#intermediate-output)
+    - [trinity/](#trinity)
+    - [transcripts/](#transcripts)
+
 
 # Input
 
@@ -56,6 +82,29 @@ In case you do not use WU-BLAST:
 | NCBI-BLAST     | http://www.ncbi.nlm.nih.gov/books/NBK279671/  | mandatory   |
 | GenblastA      | http://genome.sfu.ca/genblast/download.html   | mandatory   |
 
+## Perl Modules
+
+Available via CPAN. 
+
+| Module                | Version  |
+| --------------------- | -------- |
+| BioPerl               | 1.006924 |
+| Parallel::ForkManager | 0.7.5    |
+| Set::IntSpan          | 1.19     |
+| FileHandle::Unget     | 0.1628   |
+
+## R Packages 
+
+| Package               | Version  |
+| --------------------- | -------- |
+| plyr                  | 1.8.3    |
+| ggplot2               | 1.0.1    |
+| reshape               | 0.8.5    |
+| gridExtra             | 2.0.0    |
+| annotate              | 1.44     |
+| GO.db                 | 3.0      |
+| KEGG.db               | 3.0      |
+
 # Installation
 
 In addition to FRAMA, you have to install all third-party tools described as
@@ -69,33 +118,15 @@ create a symlink to FRAMA in one of the directories in $PATH.
 
 Here is a suggest workflow, which adds *FRAMA* to your `$PATH`:
 
-    #!bash
     unzip FRAMA.zip
-    cd FRAMA/bin/
+    cd FRAMA/
     chmod u+x FRAMA
     PATH=$(pwd):$PATH
     export PATH
+    # run example
+    FRAMA example/testing.cfg
 
-FRAMA relies on some Perl and R packages to be installed:
-
-Perl
-
-    BioPerl
-    Parallel::ForkManager
-    Set::Intspan
-    FileHandle::Unget
-
-R
-
-    plyr
-    ggplot2
-    reshape
-    gridExtra
-    annotate
-    GO
-    KEGG.db
-
-## Manual Installation
+## Manual Installation of external software
 
 For instance, on Ubuntu (15.04, Vivid Vervet) :
 
@@ -111,12 +142,12 @@ Left to install manually:
 * `Trinity, GENSCAN, Genblasta, RepeatMasker, TGICL`
 * R-packages: `gridExtra, annotate, GO, KEGG.db`
 
-## Automatic Installation
+## Automatic Installation of external software
 
-On 64bit platforms, `install.sh` attempts to download and install (as non-root)
+On 64bit platforms, `SETUP` attempts to download and install (as non-root)
 missing software packages in very naive way. This might fail due to
 different/missing library/compiler versions on your system. Required additional
-prerequesites for `install.sh` include but are not limited to:
+prerequesites for `SETUP` include but are not limited to:
 
     cmake
     zlib >= 1 (zlib1g-dev)
@@ -124,6 +155,11 @@ prerequesites for `install.sh` include but are not limited to:
     jre >= 1.7.0
     g++
     libc6 (libc6-i386) # genscan, tgicl
+
+Start automatic installation:
+
+    cd FRAMA
+    bash SETUP
 
 GENSCAN must be downloaded manually, due to licence restrictions.
 
@@ -178,7 +214,7 @@ This also serves as a template for your custom configuration.
 
 The following depends mostly on your `$PATH` variable. Specify path to
 **directories**(!) of executables for each program that is not in your `$PATH`.
-Otherwise, remove line or leave empty.
+Otherwise, remove line or leave empty. 
 
         PATH_BAMTOOLS     :=
         PATH_BOWTIE       :=
@@ -193,9 +229,12 @@ Otherwise, remove line or leave empty.
         PATH_SAMTOOLS     :=
         PATH_TGICL        :=
         PATH_TRINITY      :=
-        PATH_WUBLAST      :=
-        PATH_XDFORMAT     :=
+        PATH_BLAST        := 
 
+Indicate whether WU- or NCBI-BLAST should be used [0 WU, 1 NCBI].
+ 
+        NCBI_BLAST := 1
+        
 Store intermediate and final files in specified location. Make sure that enough
 space is available to store intermediate output of trinity, blast results, read
 alignments, ...).
@@ -335,11 +374,13 @@ transcriptome), minimum length of alignment (`-min-frac-size`), identity
         OPT_FUSION := -max-overlap 5.0 -min-frac-size 200 -min-identity 70.0
          -min-coverage 90.0
 
-### WU-BLAST
+### BLAST
+
+BLAST and GENBLASTA Paramater, respectively.
 
 Added automatically: `-wordmask=seg lcmask -topcomboN 3 -cpus 1`
 
-        OPT_WUBLAST_BLASTN :=
+        OPT_BLAST :=
 
 ### SBH requiremnts
 
@@ -374,20 +415,16 @@ Accessions [TODO].
 
 | File                                 | Description                                                           |
 | ------------------------------------ | --------------------------------------------------------------------- |
-| transcript_catalogue.gbk *           | GenBank file describing **all annotated sequences**.                  |
-| sequences-CDS.fa                     | Fasta with **coding sequences**.                                      |
-| sequences-mRNA.fa                    | Fasta with **transcript sequences** (w/o introns; clipped ends).      |
-| assembly.fa                          | Repeat masked **trinity assembly**.                                   |
-| summary.pdf                          | General overview of transcript catalogue                              |
-| tables/summary.csv                   | Table containing summary for each annotated transcript.               |
-| tables/cds.csv                       | CDS coordinates (1-based) on sequences-mRNA.fa.                       |
-| tables/annotation.csv                | Contig annotation (contig, refseq, strand, symbol).                   |
-| tables/overview.csv                  | Transcript catalogue details .                                        |
-| tables/transcriptome_statistic.csv   | Table containing descriptive statistics about transcript catalogoue.  |
+| transcriptome.gbk *                  | GenBank file describing **all annotated sequences**.                  |
+| transcriptome_CDS.fa                 | Fasta with **coding sequences**.                                      |
+| transcriptome_mRNA.fa                | Fasta with **transcript sequences** (w/o introns; clipped ends).      |
+| transcriptome_CDS.csv                | Coordinates of CDS for mRNA sequences.                                |
+| assembly_pripro.fa                   | Trinity assembly after primary processing.                            |
+| annotation.pdf                       | General overview of transcript catalogue                              |
+| annotation.csv                       | Table containing summary for each annotated transcript.               |
 
 *mRNA feature instead of 'gene' feature to limit mRNA boundaries in case of
 misassembled contigs
-
 
 ### functional annotations (based on reference)
 

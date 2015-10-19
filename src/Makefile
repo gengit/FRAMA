@@ -56,7 +56,7 @@ FINAL_RAW_ASSEMBLY  := $(OUTPUT_DIR)/assembly
 FINAL_ASSEMBLY      := $(OUTPUT_DIR)/assembly_pripro
 
 FINAL_CDS      := $(OUTPUT_DIR)/transcriptome_CDS
-FINAL_MRNA     := $(OUTPUT_DIR)/transcriptme_mRNA
+FINAL_MRNA     := $(OUTPUT_DIR)/transcriptome_mRNA
 FINAL_GENBANK  := $(OUTPUT_DIR)/transcriptome
 
 FINAL_SUMMARY := $(OUTPUT_DIR)/annotation
@@ -126,13 +126,13 @@ OPT_CD_HIT_EST               += -T $(OPT_CPUS)
 # default: RepeatMasker {{{
 NCBI_BLAST ?= 1
 
-ifeq ($(NCBI_BLAST),1)
-OPT_REPEAT_REF_TRANSCRIPTOME += -engine ncbi
-OPT_REPEAT_ASSEMBLY          += -engine ncbi
-else
-OPT_REPEAT_REF_TRANSCRIPTOME += -engine wublast
-OPT_REPEAT_ASSEMBLY          += -engine wublast
-endif
+#ifeq ($(NCBI_BLAST),1)
+#OPT_REPEAT_REF_TRANSCRIPTOME += -engine ncbi
+#OPT_REPEAT_ASSEMBLY          += -engine ncbi
+#else
+#OPT_REPEAT_REF_TRANSCRIPTOME += -engine wublast
+#OPT_REPEAT_ASSEMBLY          += -engine wublast
+#endif
 # }}}
 # default: Blast {{{
 
@@ -651,7 +651,7 @@ $(FINAL_SUMMARY).pdf : $(FINAL_SUMMARY).csv $(TABLE_DIR)/reference.csv $(PRIPRO_
 	@printf "$(P_INFO) Summarize results.\n"
 	@printf "$(P_LOG)/summary.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	Rscript $(OPT_R) summarize.R $< $(TABLE_DIR)/reference.csv $(PRIPRO_ASSEMBLY).fa.fai $(TABLE_DIR) $(OUTPUT_DIR)/summary.pdf &> $(LOG_DIR)/summary.log
+	Rscript $(OPT_R) summarize.R $< $(TABLE_DIR)/reference.csv $(PRIPRO_ASSEMBLY).fa.fai $(TABLE_DIR) $@ &> $(LOG_DIR)/summary.log
 
 $(FINAL_SUMMARY).csv : $(FINAL_GENBANK).gbk | $(TABLE_DIR)/.c
 	@printf "$(P_INFO) Create summary table.\n"
