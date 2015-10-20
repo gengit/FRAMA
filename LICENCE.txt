@@ -1,24 +1,64 @@
-Copyright (c) 2015, Martin Bens
-All rights reserved.
+FLI Software License Agreement for Academic Non-Commercial Use
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-    * Neither the name of the Leibniz Institute for Age Research - FLI nor the
-      names of its contributors may be used to endorse or promote products
-      derived from this software without specific prior written permission.
+between
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE LEIBNIZ INSTITUTE FOR AGE RESEARCH BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Leibniz-Institut für Alternsforschung - Fritz-Lipmann-Institut e.V.,
+Beutenbergstraße 11, 07745 Jena, Germany (hereinafter “FLI“)
+
+and you (“Recipient”):
+
+The software program (hereinafter “SOFTWARE”), including accompanying
+documentation, has been developed at FLI and is copyright protected. FLI hereby
+grants to Recipient a royalty-free, non-exclusive, non-transferable license to
+use the SOFTWARE for non-commercial scientific research purposes upon the terms
+and conditions set out below, which Recipient accepts by downloading the
+SOFTWARE:
+
+(1) Recipient hereby warrants and declares that he/she is an academic user at
+an academic research institution and will use the SOFTWARE solely for his/her
+own academic research purposes. Recipient will not use the SOFTWARE for
+commercial purposes without prior written consent of FLI.
+
+(2) Recipient will respect FLI’s title and copyright to the SOFTWARE and will
+not suppress the copyright notice. Recipient will not reproduce the SOFTWARE
+except as necessary for his/her internal academic use. Recipient will not
+transfer or distribute the SOFTWARE to any other person outside of his/her
+immediate research group without prior written permission of FLI.
+
+(3) Recipient will not adapt, arrange or in other ways alter the SOFTWARE
+without prior written permission by FLI. Recipient will not extract parts of
+the SOFTWARE, e.g.  modules or sub- routines, for use in other contexts without
+prior written permission by FLI. Recipient will acknowledge the contribution of
+FLI in any publication which is based on Recipient’s use of the SOFTWARE.
+
+(4) The SOFTWARE is provided “as is” and for use at Recipient’s own risk. FLI
+and its directors, officers, employees and agents make no representations or
+warranties of any kind, expressed or implied, as to quality of the SOFTWARE or
+fitness for any particular purpose, that it is free from defects, or that its
+use will not infringe any copyright, patent, trade mark or other third party
+rights. In no event shall FLI and/or its directors, officers, employees and
+agents be liable for any damages whatsoever arising out of this agreement,
+including but not limited to he use of or inability to use the SOFTWARE, even
+if FLI and/or its directors, officers, employees and agents were aware of the
+possibility of such damages.
+
+(5) Recipient assumes all and any liability for damages which may arise from
+his/her use of the SOFTWARE and hereby agrees to hold FLI and its directors,
+officers, employees and agents harmless for any loss, claim or demand by any
+other party arising from his/her use of the SOFTWARE, except to the extent
+caused by gross negligence or intent of FLI and/or its directors, officers,
+employees and agents.
+
+(6) The license is granted hereunder for the duration of the applicable
+copyright in the SOFTWARE. However, the license and the rights granted
+hereunder will terminate automatically upon any breach by Recipient of the
+terms of this License. The provisions in Sections 4, 5 and 7 shall survive
+termination of this Agreement.
+
+(7) This License Agreement shall be governed by and construed in accordance
+with the laws of Germany without reference to any of its private international
+law provisions resulting in the application of a foreign jurisdiction and under
+exclusion of the UN Convention on the International Sale of Goods. For all
+controversies arising under this Agreement, the Parties hereby irrevocably
+submit to the exclusive jurisdiction of the courts of Jena, Germany.
+

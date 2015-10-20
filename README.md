@@ -1,3 +1,12 @@
+# Licence
+
+This software was developed at the Leibniz Institute on Aging - Fritz Lipmann
+Institute (FLI; http://www.leibniz-fli.de/) under a mixed licensing model. This
+means that researchers at academic and non-profit organizations can use it for
+free, while for-profit organizations are required to purchase a license. By
+downloading the package you agree with conditions of the FLI Software License
+Agreement for Academic Non-commercial Research (FLI-LICENSE).
+
 # Introduction
 
 FRAMA is a __transcriptome assembly and mRNA annotation pipeline__, which
@@ -10,7 +19,6 @@ RNA-seq data and a reference transcriptome, FRAMA performs 4 steps:
     4) contig annotation (CDS, mRNA boundaries).
 
 Further details: [Unpublished]
-
 
 - [Input](#input)
 - [Requirements](#requirements)
