@@ -226,9 +226,13 @@ push @missing_files, "Assignment table not found."
   unless ( -e $opt{assignment} );
 push @missing_files, "Reference transcriptome not found."
   unless ( -e $opt{reference} );
-push @missing_files, "Trinity output not found." unless ( -e $opt{trinity} );
+push @missing_files, "Trinity output not found." 
+  unless ( -e $opt{trinity} );
 push @missing_files, "Blast results for CDS annotation not found."
   unless ( -e $opt{blast} );
+push @missing_files, "GENSCAN matrix not found."
+  unless ( -e $opt{'genscan-matrix'} );
+
 if ( $opt{'clipping'} ) {
     push @missing_files, "Hash containing path to readfiles not found."
       unless ( -e $opt{'read-index'} );
@@ -517,13 +521,10 @@ sub process {
     $obj{genscan_file} = catfile( $obj{transcript_dir}, "CDS_genscan.txt" );
     unless ( -e $obj{genscan_file} ) {
         my @command = (
-            "genscan",
-            $opt{'genscan-matrix'},
+            "genscan", $opt{'genscan-matrix'},
             catfile( $obj{transcript_dir}, "contig.fa" ),
-            ">",
-            $obj{genscan_file},
-            "2>",
-            "$obj{genscan_file}.err"
+            ">", $obj{genscan_file},
+            "2>", "$obj{genscan_file}.err"
         );
         my $failed = system( join " ", @command );
         if ($failed) {

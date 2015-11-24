@@ -127,7 +127,7 @@ my %opt = (
     'predictions'     => 0,
     'all'             => 0,
     'intron-length'   => 50,
-    'selenopositions' => 0,
+    'seleno' => 0,
 
     'help'      => 0,
     'man'       => 0,
@@ -147,20 +147,13 @@ GetOptions(
 
 pod2usage(1) if $opt{help};
 
-# mandatory
-unless ($opt{contig}) {
-    pod2usage(-message => "\n\tNot enough arguments. See -help.\n");
+unless (-e $opt{contig}) {
+    die "Contig file not found";
 }
 
-#unless (-e $opt{contig} && -e $opt{ortholog}) {
-#    die "\n\tContig or ortholog file not found.\n\n";
-#}
-
-#my ($cds_start, $cds_end) = split " ", $opt{cds};
-
-#unless ($cds_start && $cds_end) {
-#    die "\n\t-cds should contain somethine like \"20 50\"\n\n";
-#}
+unless( -e $opt{'genscan-matrix'}) {
+    die "GENSCAN matrix not found";
+}
 
 my $io = Bio::SeqIO->new(-file => $opt{contig}, -format => "fasta");
 my $contig_seq = $io->next_seq if ($io);
@@ -169,16 +162,7 @@ unless ($contig_seq) {
     die "\n\tCould not find contig sequence: $opt{contig}\n\n";
 }
 
-#$io = Bio::SeqIO->new(-file => $opt{ortholog}, -format => "fasta");
-#my $orth_seq = $io->next_seq if ($io);
-
-#unless ($orth_seq) {
-#    die "\n\tCould not find reference sequence: $opt{ortholog}\n\n";
-#}
-
 my $contig_id = $contig_seq->id;
-
-#my $orth_id   = $orth_seq->id;
 
 # Header
 print "###\n";
@@ -212,7 +196,7 @@ if ($opt{msa}) {
                     $compareTo_seq = $seq->clone;
                 }
 
-                #                $add_ortholog = 0 if ($seq->id =~ /$orth_id$/);
+                #$add_ortholog = 0 if ($seq->id =~ /$orth_id$/);
                 $toAlign->write_seq($seq);
                 push @lengths, $seq->length;
             }
@@ -370,9 +354,9 @@ sub validateSequence {
         # selenoproteins: allow same number of TGA codons as ortholog
         my $seleno_in_contig = 0;
         while ($prot =~ /\*/g) {
-            if (scalar @selenos > $selenopositions) {
-                return (0, undef);
-            }
+            #if (scalar @selenos > $selenopositions) {
+            #    return (0, undef);
+            #}
 
             if (uc(substr($possible_orf, ($-[0] * 3), 3)) eq "TGA") {
                 push @selenos, $-[0];
@@ -394,16 +378,17 @@ sub validateSequence {
 sub getCDSbyMSA {
     my ($aln, $selenopositions, $contig_id) = @_;
 
-    unless ($selenopositions) {
-        $selenopositions = 0;
-    }
-
     unless ($aln) {
         return undef;
     }
 
+    unless ($selenopositions) {
+        $selenopositions = 0;
+    }
+
     my ($aligned_contig_seq) =
       grep { $_->id =~ /$contig_id/ } $aln->each_seq();
+
     unless ($aligned_contig_seq->seq) {
         warn("Trinity contig not found in alignment: $contig_id");
         return undef;
