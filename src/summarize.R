@@ -389,7 +389,7 @@ pie(comp, labels = labels, main = "CDS inference method (best transcript per gen
 ######################################################################
 
 print(ggplot(sum.table, aes(x=contig_length)) +
-geom_bar(stat = "bin", binwidth = 100) +
+geom_histogram(stat = "bin", binwidth = 100) +
 scale_x_continuous(breaks = round(seq(200, max(sum.table$contig_length), by =300),1)) +
 theme_bw() +
 xlab("length in bp") +
@@ -400,7 +400,7 @@ theme(axis.text.x=element_text(angle = 90, vjust=0.5))
 )
 
 print(ggplot(sum.table.bestCDS, aes(x=contig_length)) +
-geom_bar(stat = "bin", binwidth = 100) +
+geom_histogram(stat = "bin", binwidth = 100) +
 scale_x_continuous(breaks = round(seq(200, max(sum.table$contig_length), by =300),1)) +
 theme_bw() +
 xlab("length in bp") +
@@ -415,7 +415,7 @@ theme(axis.text.x=element_text(angle = 90, vjust=0.5))
 ######################################################################
 
 print(ggplot(sum.table, aes(x=cds_length)) +
-geom_bar(stat = "bin", binwidth = 100) +
+geom_histogram(stat = "bin", binwidth = 100) +
 scale_x_continuous(breaks = round(seq(200, max(sum.table$contig_length), by =300),1)) +
 theme_bw() +
 xlab("CDS length") +
@@ -426,7 +426,7 @@ theme(axis.text.x=element_text(angle = 90, vjust=0.5))
 )
 
 print(ggplot(sum.table.bestCDS, aes(x=cds_length)) +
-geom_bar(stat = "bin", binwidth = 100) +
+geom_histogram(stat = "bin", binwidth = 100) +
 scale_x_continuous(breaks = round(seq(200, max(sum.table$contig_length), by =300),1)) +
 theme_bw() +
 xlab("CDS length") +
@@ -477,7 +477,7 @@ if (nrow(scaffold.table) > 0) {
     scaffold.table$length_improvement = round((scaffold.table$length/scaffold.table$contig_length), 1)
 
     print(ggplot(scaffold.table, aes(x=length_improvement)) +
-          geom_bar(stat = "bin", binwidth = 0.1) +
+          geom_histogram(stat = "bin", binwidth = 0.1) +
           scale_fill_brewer(palette="Spectral") +
           scale_x_continuous(breaks = round(seq(1, max(scaffold.table$length_improvement), by = 0.2),1)) +
           theme_bw() +
@@ -495,7 +495,7 @@ if (nrow(scaffold.table.bestCDS) > 0) {
     scaffold.table.bestCDS$length_improvement = round((scaffold.table.bestCDS$length/scaffold.table.bestCDS$contig_length), 1)
 
     print(ggplot(scaffold.table.bestCDS, aes(x=length_improvement)) +
-          geom_bar(stat = "bin", binwidth = 0.1) +
+          geom_histogram(stat = "bin", binwidth = 0.1) +
           scale_fill_brewer(palette="Spectral") +
           scale_x_continuous(breaks = round(seq(1, max(scaffold.table.bestCDS$length_improvement), by = 0.2),1)) +
           theme_bw() +
@@ -514,7 +514,7 @@ if (nrow(scaffold.table.bestCDS) > 0) {
 sum.table.clipped = sum.table[sum.table$clipped > 0, ]
 if (nrow(sum.table.clipped) > 0) {
     print(ggplot(sum.table.clipped, aes(x=clipped)) +           
-          geom_bar(stat = "bin", binwidth = 50) +               
+          geom_histogram(stat = "bin", binwidth = 50) +               
           scale_x_continuous(breaks = seq(0, max(sum.table.clipped$clipped), by = 200)) +
           theme_bw() +                                          
           theme(axis.line = element_line(colour = "black")) +
@@ -528,7 +528,7 @@ if (nrow(sum.table.clipped) > 0) {
 sum.table.bestCDS.clipped = sum.table.bestCDS[sum.table.bestCDS$clipped > 0, ]
 if (nrow(sum.table.bestCDS.clipped) > 0) {
     print(ggplot(sum.table.bestCDS.clipped, aes(x=clipped)) +           
-          geom_bar(stat = "bin", binwidth = 50) +               
+          geom_histogram(stat = "bin", binwidth = 50) +               
           scale_x_continuous(breaks = seq(0, max(sum.table.clipped$clipped), by = 200)) +
           theme_bw() +                                          
           theme(axis.line = element_line(colour = "black")) +
