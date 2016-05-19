@@ -1,7 +1,9 @@
 #!/usr/bin/env perl 
 
-=pod
+=pcd
+
 =head1 INFO
+
 Martin Bens, bensmartin@gmail.com
 2014-07-21
 
@@ -45,9 +47,9 @@ identity to reference.
 
 =item B<-fragment-identity>  98
 
-Minimum identity in overlap between pairs which exceed "-fragment-overlap" required
-to keep both fragments [default: 98]. If the identity in overlap is lower,
-fragment with higher identity to ortholog is kept.
+Minimum identity in overlap between pairs which exceed "-fragment-overlap"
+required to keep both fragments [default: 98]. If the identity in overlap is
+lower, fragment with higher identity to ortholog is kept.
 
 =item B<-allow-gap-embedded> 200
 
@@ -125,10 +127,10 @@ my %opt = (
     'cpu'              => 1,
     'min-contribution' => 20,
     'fragment-overlap' => 5,
+    'force-output'     => 0,
+    'useId'            => 0
 );
 
-my $man  = 0;
-my $help = 0;
 GetOptions(
     \%opt,               'contig|c=s',
     'ortholog|r=s',      'cds=i{2}',
@@ -136,12 +138,14 @@ GetOptions(
     'fragment-list=s',   'output|o=s',
     'out-combined|oc=s', 'out-final|of=s',
     'cpu=i',             'assembling=s',
-    'out-filtered=s',    'fragment-overlap=s'
+    'out-filtered=s',    'fragment-overlap=s',
+    'help', 'force-output', 'useId', 
 ) or pod2usage(1);
 
 pod2usage( -verbose => 2 ) if $opt{help};
 
 $opt{'fragment-overlap'} /= 100;
+
 
 if ( !$opt{contig} || !$opt{ortholog} || !$opt{fragments} ) {
     die "You must specify -contig, -ortholog and -fragments\n";
@@ -241,6 +245,13 @@ print "##\n\n";
 
 unless ( @fragments > 0 ) {
     print "# No fragments found. Nothing to do.\n";
+    if ($opt{'force-output'} && $opt{output}) {
+        my $io = Bio::SeqIO->new( 
+            -file => ">" . $opt{output}, 
+            -format => "fasta" 
+        );
+        $io->write_seq( $contig_seq );
+    }
     exit;
 }
 
@@ -251,12 +262,12 @@ for (@fragments) {
     my $id;
     if ( defined ref($_) && ref($_) eq "ARRAY" ) {
         $fragment_seq = $db_fragments->get_Seq_by_id( $_->[0] );
-        $id           = "FRAGMENT_" . $_->[0];
+        $id = "FRAGMENT_" . $_->[0];
         print "# Not found: $_->[0]\n" unless ($fragment_seq);
         $fragment_seq = $fragment_seq->revcom if ( $fragment_seq && $_->[1] );
     } else {
         $fragment_seq = $db_fragments->get_Seq_by_id($_);
-        $id           = "FRAGMENT_" . $_;
+        $id = "FRAGMENT_" . $_;
         print "# Not found: $_\n" unless ($fragment_seq);
     }
     push @fragment_seqs,
@@ -308,6 +319,15 @@ if (   ( $opt{cds} && $aln->num_sequences <= 3 )
 {
     # TODO: write contig IDs of clusters to file
     print "\n# Nothing to do.\n";
+    
+    if ($opt{'force-output'} && $opt{output}) {
+        my $io = Bio::SeqIO->new( 
+            -file => ">" . $opt{output}, 
+            -format => "fasta" 
+        );
+        $io->write_seq( $contig_seq );
+    }
+
     exit;
 }
 
@@ -344,7 +364,11 @@ if ( @$remove_columns > 0 ) {
 
 if ( $opt{output} ) {
     my $io = Bio::SeqIO->new( -file => ">" . $opt{output}, -format => "fasta" );
-    $io->write_seq( $aln->get_seq_by_id("Consensus") );
+    my $seq = $aln->get_seq_by_id("Consensus");
+    if ($opt{'useId'}) {
+        $seq->id($contig_seq->id);
+    }
+    $io->write_seq( $seq );
 }
 
 if ( $opt{'out-final'} ) {
