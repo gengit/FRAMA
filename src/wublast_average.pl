@@ -156,9 +156,12 @@ sub process {
     my $query_l  = $lq{$c_query};
     my $target_l = $lt{$c_target};
 
-    unless ($query_l && $target_l) {
-        print STDERR "Length of query or target not found: Query: $c_query, Target: $c_target\n";
-        print STDERR "Skipping.";
+    unless ($query_l) {
+        print STDERR "Length of query not found: $c_query\n";
+        return;
+    }
+    unless ($target_l) {
+        print STDERR "Length of target not found: $c_target\n";
         return;
     }
 
