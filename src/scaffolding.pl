@@ -1,6 +1,6 @@
 #!/usr/bin/env perl 
 
-=pcd
+=pod
 
 =head1 INFO
 

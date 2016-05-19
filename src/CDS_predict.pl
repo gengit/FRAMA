@@ -43,7 +43,7 @@ sapiens = Hsapiens) is necessary. A valid sequence name looks like
 
 Format of -msa (fasta, clustalw,...)
 
-=item B<-unaligned> 
+=item B<-unaligned>
 
 Specify if -msa contains only unaligned transcripts (in fasta format).
 
@@ -64,17 +64,14 @@ Output of alignment including contig and ortholog.
 
 Output of genscan result if computed.
 
-=item B<-all> 
+=item B<-all>
 
 Force to calculate CDS prediction with all methods (otherwise stops after first
 successfull prediction)
 
 =item B<-genscan-matrix>
 
-
-
 =back
-
 
 =cut
 
@@ -120,29 +117,27 @@ my %translateStatus = (
 my $codon_table = Bio::Tools::CodonTable->new(-id => 1);
 
 my %opt = (
-    predictions => 0,
-    reindex     => 0,
-
-    'msa-format'      => 'fasta',
-    'predictions'     => 0,
-    'all'             => 0,
-    'intron-length'   => 50,
-    'seleno' => 0,
-
-    'help'      => 0,
-    'man'       => 0,
-    'unaligned' => 0,
+    predictions     => 0,
+    reindex         => 0,
+    'msa-format'    => 'fasta',
+    'predictions'   => 0,
+    'all'           => 0,
+    'intron-length' => 50,
+    'seleno'        => 0,
+    'help'          => 0,
+    'man'           => 0,
+    'unaligned'     => 0,
 );
 
 pod2usage(-message => "\n\tNo arguments. See -help.\n") if (@ARGV == 0);
 
 GetOptions(
-    \%opt,             "help|h",         "man",           "contig=s",
-    "ortholog=s",      "seleno=i",       "msa=s",         "msa-format=s",
-    'intron-length=i', 'predictions',    'cds=s',         'out-aln=s',
-    'out-cds=s',       'out-prot=s',     'out-genscan=s', 'all',
-    'species=s',
-    'unaligned',       'help',           'compareTo=s', 'genscan-matrix=s'
+    \%opt             , "help|h"      , "man"           , "contig=s"     ,
+    "ortholog=s"      , "seleno=i"    , "msa=s"         , "msa-format=s" ,
+    'intron-length=i' , 'predictions' , 'cds=s'         , 'out-aln=s'    ,
+    'out-cds=s'       , 'out-prot=s'  , 'out-genscan=s' , 'all'          ,
+    'species=s'       , 'unaligned'   , 'help'          , 'compareTo=s'  ,
+    'genscan-matrix=s'
 ) or pod2usage(1);
 
 pod2usage(1) if $opt{help};
@@ -159,7 +154,7 @@ my $io = Bio::SeqIO->new(-file => $opt{contig}, -format => "fasta");
 my $contig_seq = $io->next_seq if ($io);
 
 unless ($contig_seq) {
-    die "\n\tCould not find contig sequence: $opt{contig}\n\n";
+    die "Could not find contig sequence: $opt{contig}";
 }
 
 my $contig_id = $contig_seq->id;
@@ -170,7 +165,7 @@ print "# sequences " . $contig_seq->id . "\n";
 print "# selenopositions " . $opt{seleno} . "\n";
 print "##\n\n";
 
-my $aln          = Bio::SimpleAlign->new();
+my $aln = Bio::SimpleAlign->new();
 my $add_ortholog = 1;
 my @lengths;
 
@@ -187,7 +182,10 @@ if ($opt{msa}) {
     my $failed = 0;
     if (-e $opt{msa}) {
         if ($opt{unaligned}) {
-            my $io = Bio::SeqIO->new(-file => $opt{msa}, -format => $opt{'msa-format'});
+            my $io = Bio::SeqIO->new(
+                -file => $opt{msa},
+                -format => $opt{'msa-format'}
+            );
             while (my $seq = $io->next_seq) {
                 if (!$opt{predictions} && $seq->id =~ /XM/) {
                     next;
@@ -195,20 +193,17 @@ if ($opt{msa}) {
                 if ($seq->id =~ /cds:(.+?):$opt{compareTo}$/) {
                     $compareTo_seq = $seq->clone;
                 }
-
                 #$add_ortholog = 0 if ($seq->id =~ /$orth_id$/);
                 $toAlign->write_seq($seq);
                 push @lengths, $seq->length;
             }
         } else {
-
             my $io = Bio::AlignIO->new(
                 -file   => $opt{msa},
                 -format => $opt{'msa-format'}
             );
             my $tmp_aln = $io->next_aln() if ($io);
             if ($tmp_aln) {
-
                 # CDS of reference transcript already present?
                 for ($tmp_aln->each_seq) {
                     if (!$opt{predictions} && $_->id =~ /XM/) {
@@ -217,7 +212,6 @@ if ($opt{msa}) {
                     if ($_->id =~ /cds:(.+?):$opt{compareTo}$/) {
                         $compareTo_seq = $_->clone;
                     }
-
                     #$add_ortholog = 0 if ($_->id =~ /$orth_id/);
                     $aln->add_seq($_);
                 }
@@ -252,6 +246,7 @@ if ($opt{msa}) {
 # add contig
 $toAlign->write_seq($contig_seq);
 push @lengths, $contig_seq->length;
+my $max_length = max(@lengths);
 
 my $output_file;
 my $out_fh;
@@ -261,26 +256,10 @@ if ($opt{'out-aln'}) {
     ($out_fh, $output_file) = tempfile(UNLINK => 1);
 }
 
-unless ($aln) {
-
-    # align all sequences
-
-    my $command;
-
-    # more accurate settings but not suitable for long alignments
-    if (max(@lengths) < MAFFT_LENGTH) {
-        $command =
-          "mafft --localpair --maxiterate 1000 --quiet $align_sequences > $output_file 2> $output_file.err";
-    } else {
-        $command = "mafft --quiet $align_sequences > $output_file 2> $output_file.err";
-    }
-    system($command) == 0 || die "\nFailed to compute alignment with MAFFT.\n\n";
-    $io = Bio::AlignIO->new(-file => $output_file, -format => "fasta");
-    $aln = $io->next_aln if ($io);
+if ($opt{"unaligned"}) {
+    $aln = run_alignment($max_length, $align_sequences, undef, $output_file);
 } else {
-
     # preserve existing alignment and add reference, reference cds, contig
-
     my ($fh1, $alignment_file) = tempfile(UNLINK => 1);
     my $io = Bio::AlignIO->new(
         -file   => ">" . $alignment_file,
@@ -288,20 +267,8 @@ unless ($aln) {
     );
     $io->write_aln($aln);
 
-    my $command;
-
-    # more accurate settings but not suitable for long alignments
-    if (max(@lengths) < MAFFT_LENGTH) {
-        $command =
-          "mafft --localpair --maxiterate 1000 --quiet --add $align_sequences $alignment_file > $output_file 2> /dev/null";
-    } else {
-        $command =
-          "mafft --quiet --add $align_sequences $alignment_file > $output_file 2> /dev/null";
-    }
-    system($command) == 0 || die "\nFailed adding sequences to existing alignment\n\n";
-    $io = Bio::AlignIO->new(-file => $output_file, -format => "fasta");
-    $aln = $io->next_aln;
-
+    $aln = run_alignment($max_length, $align_sequences, $alignment_file,
+        $output_file);
     close $fh1;
 }
 close $out_fh unless ($opt{'out-aln'});
@@ -414,13 +381,12 @@ sub getCDSbyMSA {
         }
 
         # find gaps > 20 with splicing motifs (GT..AG)
-        my $introns =
-          findIntrons($current_seq->seq, $aligned_contig_seq->seq, $opt{'intron-length'});
+        my $introns = findIntrons($current_seq->seq, $aligned_contig_seq->seq,
+            $opt{'intron-length'});
         my $intron_string = getIntronString($introns);
 
         # check all frames
         for my $frame (0 .. 2) {
-
             my $current_start = $start + $frame;
 
             # positions in contig
@@ -463,7 +429,6 @@ sub getCDSbyMSA {
 
             # protein must have "M" as first aminoacid in order to have a
             # complete 5'
-
             $status->[0] = 0 if ($prot !~ /^M/);
 
             # in frame stop codons?
@@ -483,7 +448,6 @@ sub getCDSbyMSA {
             }
 
             if (!$valid_cds) {
-
                 # pseudogene, assembly error, annotation error, ...
                 $visited{$visit_string} = {
                     ids    => ["$species:$orth_id"],
@@ -511,17 +475,14 @@ sub getCDSbyMSA {
 
             if ($prot_end =~ /\*/) {
                 if ($-[0] == 0) {
-
                     # same end
                     $seq_end = $next_start + 2;
                 } else {
-
                     # diff end, but stop codon => full 3prime
                     $prot .= substr($prot_end, 0, $-[0]);
                     $seq_end = $next_start + 2 + (3 * $-[0]);
                 }
             } else {
-
                 # no stop codon, last complete codon => partial 3prime
                 $seq_end = length($seq_string);
                 $status->[1] = 0;
@@ -544,6 +505,7 @@ sub getCDSbyMSA {
                     $seq_start   = ($-[0] * 3) + $start + 1;
                     $prot        = $1 . $prot;
                     $status->[0] = 1;
+                    $exons->[0]->[0] = $seq_start;
                 }
             }
 
@@ -602,12 +564,9 @@ sub getCDSbyMSA {
           (map { $_ * 3 + $current_cds->{start} } @{$current_cds->{seleno}})
           if ($current_cds->{seleno} ne "NA");
 
-        print "alignment\t";
         print join "\t",
-          (
-            $exon_string, $status, join(",", @{$current_cds->{ids}}),
-            $current_cds->{prot}, $seleno_string
-          );
+          ( "alignment", $exon_string, $status, join(",",
+          @{$current_cds->{ids}}), $current_cds->{prot}, $seleno_string);
         print "\n";
     }
 
@@ -652,7 +611,7 @@ sub getIntronLess {
     my $last_start = $start;
     my $end_of_seq = 0;
     my $length = 0;
-    
+
     for (my $i = 0; $i < @introns; $i++) {
         my $end = $introns[$i]->[0] - 1;
         if ($end > $stop) {
@@ -664,12 +623,15 @@ sub getIntronLess {
         $last_start = $introns[$i]->[1];
 
         # introns are zero based => +1
-        my ($re_start, $re_end) =
-          ($string->location_from_column($e_start + 1), $string->location_from_column($e_end + 1));
+        my ($re_start, $re_end) = (
+            $string->location_from_column($e_start + 1), 
+            $string->location_from_column($e_end + 1)
+        );
         $re_start = ($re_start) ? $re_start->start : 1;
         $re_end   = ($re_end)   ? $re_end->end     : 1;
 
-        push @exon_string, substr($string_seq, $re_start - 1, ($re_end - $re_start + 1));
+        push @exon_string, 
+            substr($string_seq, $re_start - 1, ($re_end - $re_start + 1));
         push @exons, [$re_start, $re_end];
         $length += $re_end - $re_start + 1;
 
@@ -682,8 +644,8 @@ sub getIntronLess {
         # introns are zero based => +1
         my ($re_start, $re_end) =
           ($string->location_from_column($e_start + 1), $string->location_from_column($e_end + 1));
-        $re_start = ($re_start) ? $re_start->start   : 1;    
-        $re_end   = ($re_end)   ? $re_end->start : 1;    
+        $re_start = ($re_start) ? $re_start->start   : 1;
+        $re_end   = ($re_end)   ? $re_end->start : 1;
 
         push @exon_string, substr($string_seq, $re_start - 1, ($re_end - $re_start + 1));
         push @exons, [$re_start, $re_end];
@@ -755,7 +717,7 @@ sub getCDSbyGenscan {
     }
 
     unless (-e $genscan_file) {
-        my $command = "genscan ".$opt{'genscan-matrix'}." $opt{contig} > $genscan_file 2> /dev/null"; 
+        my $command = "genscan ".$opt{'genscan-matrix'}." $opt{contig} > $genscan_file 2> /dev/null";
         my $failed = system($command);
         if ($failed) {
             warn("Genscan failed.");
@@ -776,11 +738,11 @@ sub getCDSbyGenscan {
 
     my @locations;
     for my $gene (@predictions) {
-        next
-          if ($gene->strand == -1);    # we assume that our contig is orientated correctly
+        # we assume that our contig is orientated correctly
+        next if ($gene->strand == -1);
         next unless ($gene->exons);
-        my $location = Bio::Location::Split->new();
 
+        my $location   = Bio::Location::Split->new();
         my @exons      = $gene->exons;
         my $first_exon = shift @exons;
         if ($first_exon->frame > 0) {
@@ -848,7 +810,8 @@ sub getCDSbyGenscan {
             close $fh;
             close $fh_aln;
 
-            my $cur_identity = sprintf("%.3f", $aln->overall_percentage_identity('short'));
+            my $cur_identity =
+                sprintf("%.3f", $aln->overall_percentage_identity('short'));
 
             if ($cur_identity > $identity) {
                 $location_index = $orf;
@@ -856,7 +819,8 @@ sub getCDSbyGenscan {
             }
 
             my $prot = $codon_table->translate($out_seq->seq);
-            print join "\t", "# genscan", $loc->start . "-" . $loc->end, $cur_identity, $prot, "NA";
+            print join "\t", "# genscan", $loc->start . "-" . $loc->end,
+                $cur_identity, $prot, "NA";
             print "\n";
 
             $orf++;
@@ -890,35 +854,35 @@ sub getCDSbyGenscan {
         }
     }
 
+    # 'round' to complete last codon because databases don't like incomplete
+    # codons.
+    @locations = $location->each_Location();
+    my $length = 0;
+    for (@locations) {
+        $length += $_->length;
+    }
+
+    my $residue = $length % 3;
+    if ($residue != 0) {
+        my $ee = $locations[$#locations]->end;
+        $locations[$#locations]->end($ee - $residue);
+    }
+
     # determine completeness (START-codon and STOP-codon)
     # risky to assume completeness, but we know that we are dealing with
     # genscan result
-    if (uc($contig_seq->subseq($location->start, $location->start + 2)) eq "ATG") {
-        $completeness->[0] = 1;
-    }
-    if ($codon_table->is_ter_codon($contig_seq->subseq($location->end - 2, $location->end))) {
-        $completeness->[1] = 1;
-    }
+    my $nt = $contig_seq->subseq($location);
+    my $as = $codon_table->translate($nt);
 
-    my $translation;
-    if (@skipped_bases > 0) {
-        $translation .= $contig_seq->trunc($first_location->start, $first_location->end)->seq;
-        for (@sub_locations) {
-            $translation .= $contig_seq->trunc($_->start, $_->end)->seq;
-        }
-        $translation .= $contig_seq->trunc($last_location->start, $last_location->end - 3)->seq;
-    } else {
-        $translation = $contig_seq->trunc($location->start, $location->end - 3)->seq;
-    }
+    $completeness->[0] = 1 if ($as =~ /^M/);
+    $completeness->[1] = 1 if ($as =~ /\*$/);
 
-    $translation = "" unless (defined $translation);
-
-    my $location_string = join ",", (map { $_->start . "-" . $_->end } $location->sub_Location);
+    my $location_string = join ",", (map { $_->start . "-" . $_->end }
+        $location->sub_Location);
 
     my $completeness_string = $translateStatus{join("", @$completeness)};
-    print join "\t", "genscan", $location_string,
-      $completeness_string, "NA",
-      $codon_table->translate($translation), "NA";
+    print join "\t", "genscan", $location_string, $completeness_string,
+        "NA", $as, "NA";
     print "\n";
 
     return 1;
@@ -952,7 +916,48 @@ sub max {
         }
     }
     return $max;
+}
 
+sub run_alignment {
+    my ($max_length, $align_sequences, $alignment_file, $output_file) = @_;
+
+	my (@main_com, @command);
+
+	if ($max_length < MAFFT_LENGTH) {
+		@main_com = ( "mafft", "--localpair", "--maxiterate 1000");
+	} else {
+		@main_com = ("mafft");
+	}
+
+    if (defined $alignment_file && -e $alignment_file) {
+        # add sequences
+        @command = (
+            "--quiet",
+            "--add $align_sequences",
+            "$alignment_file",
+            ">",
+            "$output_file",
+            "2>",
+            "$output_file.err"
+        );
+    } else {
+        # align all sequences
+        @command = (
+            "--quiet",
+            "$align_sequences",
+            ">",
+            "$output_file",
+            "2>",
+            "$output_file.err"
+        );
+    }
+
+	my $command = join " ", (@main_com, @command);
+    system($command) == 0 || die "Failed to compute alignment with MAFFT\n$@\n";
+    $io = Bio::AlignIO->new(-file => $output_file, -format => "fasta");
+    $aln = $io->next_aln;
+
+	return $aln;
 }
 
 1;
@@ -963,20 +968,20 @@ MAFFT Notes:
 
     Mafft-linsi not suitable for long sequences (in case of scaffolded TTN it
     terminates with errors [+ takes ages and a lot of memory])
-    
+
     Longest sequences in human refseq:
-    
-    NM_001267550    109224  
-    NM_001256850    104301  
-    NM_133378       101520  
-    NM_133437       82605   
-    NM_133432       82404   
-    NM_003319       82029   
-    NM_024690       43816   
-    NM_182961       27748   
-    NM_033071       27439   
-    NM_001271223    26925   
-    
+
+    NM_001267550    109224
+    NM_001256850    104301
+    NM_133378       101520
+    NM_133437       82605
+    NM_133432       82404
+    NM_003319       82029
+    NM_024690       43816
+    NM_182961       27748
+    NM_033071       27439
+    NM_001271223    26925
+
     => use mafft-linsi for alignments with longest sequences smaller than 30kb
     => auto otherwise
 
@@ -986,9 +991,9 @@ EMBOSS Notes:
     -auto - no prompts
     -find 2 - sequence between stops
     -noreverse -  ...
-    
+
 GENBANK DEFINITION LINE
 
     DEFINITION - A concise description of the sequence. Mandatory keyword/one or
     more records.  Example: DEFINITION  Heterocephalus glaber BHMT mRNA
-    
+
