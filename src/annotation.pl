@@ -125,9 +125,6 @@ use Bio::SimpleAlign;
 use Bio::Tools::Genscan;
 use Bio::Taxon;
 
-
-
-
 use constant TDATE => uc( strftime "%d-%b-%Y", localtime );
 
 # Blast
@@ -185,21 +182,14 @@ my %opt   = (
 );
 
 GetOptions(
-    \%opt,              'trinity=s',
-    'reference=s',      'assignment=s',
-    'output-dir=s',     'output-file=s',
-    'reindex',          'scaffolding=s',
-    'contig-file=s',    'ortholog-file=s',
-    'ortholog=s',       'contig=s',
-    'read-index=s',     'debug',
-    'reindex',          'new',
-    'blast=s',          'ortholog-table=s',
-    'ortholog-cds=s',   'species-order=s',
-    'cpus=i',           'help',
-    'taxon-assemble=s', 'taxon-ortholog=s',
-    "genscan-matrix=s", 'predictions!',
-    'combineonly',      'tgicl=s',
-    'clipping!'
+    \%opt,
+    'trinity=s', 'reference=s', 'assignment=s', 'output-dir=s',
+    'output-file=s', 'reindex', 'scaffolding=s', 'contig-file=s',
+    'ortholog-file=s', 'ortholog=s', 'contig=s', 'read-index=s', 'debug',
+    'reindex', 'new', 'blast=s', 'ortholog-table=s', 'ortholog-cds=s',
+    'species-order=s', 'cpus=i', 'help', 'taxon-assemble=s',
+    'taxon-ortholog=s', "genscan-matrix=s", 'predictions!', 'combineonly',
+    'tgicl=s', 'taxon_nodes=s', 'taxon_names=s', 'taxon_dir=s', 'clipping!'
 );
 
 pod2usage( -verbose => 2 ) if $opt{help};
@@ -212,9 +202,9 @@ if ( $opt{combineonly} && $opt{"output-file"} && $opt{"output-dir"} ) {
 }
 
 # MANDATORY PARAMETER
+my @mandatory_parameter = ( "assignment", "reference", "trinity", "blast",
+    "read-index", "output-dir" );
 
-my @mandatory_parameter =
-  ( "assignment", "reference", "trinity", "blast", "read-index", "output-dir" );
 for (@mandatory_parameter) {
     if ( not exists $opt{$_} ) {
         die "\nMissing parameter: $_\n\n";
@@ -222,6 +212,7 @@ for (@mandatory_parameter) {
 }
 
 my @missing_files;
+
 push @missing_files, "Assignment table not found."
   unless ( -e $opt{assignment} );
 push @missing_files, "Reference transcriptome not found."
@@ -244,6 +235,15 @@ if ( exists $opt{'ortholog-table'} ) {
       unless ( -e $opt{'ortholog-table'} );
     push @missing_files, "Ortholog CDS sequences not found."
       unless ( -e $opt{'ortholog-cds'} );
+} else {
+    print "Pairwise alignment with reference transcripts.\n"
+}
+
+if ( $opt{scaffolding} ) {
+    push @missing_files, "Blast result for scaffolding not found."
+      unless ( -e $opt{scaffolding} );
+} else {
+    print "Scaffolding disabled\n";
 }
 
 if (@missing_files) {
@@ -251,16 +251,7 @@ if (@missing_files) {
     for (@missing_files) {
         print STDERR "\t$_\n";
     }
-    die;
-}
-
-# OPTIONAL PARAMETER
-
-unless ( $opt{scaffolding} ) {
-    print "Scaffolding disabled\n";
-} else {
-    push @missing_files, "Blast result for scaffolding not found."
-      unless ( -e $opt{scaffolding} );
+    die "Missing files\n";
 }
 
 my @species_order = split ",", $opt{'species-order'}
@@ -818,8 +809,11 @@ sub performClipping {
             "> $output_genscan"
         );
 
+        my $command =  join " ", @command;
+        logcommand($obj->{transcript_dir}, $command);
+        
         # RUN
-        my $failed = system( join " ", @command );
+        my $failed = system( $command );
         if ($failed) {
             print STDERR
               "ERROR: genscan_annotate.pl failed. Ignoring further CDS regions if any. ["
@@ -884,7 +878,10 @@ sub performClipping {
         push @command, "1> $output_clip";
         push @command, "2> $output_clip_err";
 
-        my $failed = system( join " ", @command );
+        my $command = join " ", @command;
+        logcommand($obj->{transcript_dir}, $command);
+
+        my $failed = system( $command );
         if ($failed) {
             print STDERR "ERROR: mRNA clipping failed.\n";
             return;
@@ -940,6 +937,7 @@ sub performCDSprediction {
 
         my $orthologs = $ortholog_table->{ $obj->{orth_id} }
           if ( defined $ortholog_table );
+
         if ($orthologs) {
 
             # fasta with CDS of orthologs
@@ -1020,8 +1018,11 @@ sub performCDSprediction {
         push @command, "-predictions" if ( $opt{'predictions'} );
 
         push @command, "> $out_txt_file 2> $out_txt_file.err";
-        print STDERR ( join " ", @command ) if ($debug);
-        my $failed = system( ( join " ", @command ) );
+
+        my $command =  join " ", @command;
+        logcommand($obj->{transcript_dir}, $command);
+
+        my $failed = system( $command );
         if ($failed) {
             print STDERR "ERROR: CDS prediction failed! ["
               . $obj->{contig_id} . "; "
@@ -1286,8 +1287,10 @@ sub performScaffolding {
             "2> $output_txt_file.err"
         );
 
-        #print join " ", @command;
-        my $failed = system( join " ", @command );
+        my $command =  join " ", @command;
+        logcommand($obj->{transcript_dir}, $command);
+
+        my $failed = system($command);
         if ($failed) {
             warn(   "Scaffolding failed: "
                   . $obj->{contig_id} . "/"
@@ -1377,17 +1380,29 @@ sub getTaxon {
     # Taxonomy currently requires internet connection.
     #
 
-    my $dbh;
     my ($taxon, $taxon_id, $taxon_name, $division) = (undef, $id, "UNKOWN", "UNKNOWN");
-    eval {
-        $dbh = Bio::DB::Taxonomy->new(-source => 'entrez');
-        $taxon = $dbh->get_taxon( -taxonid => $id );
-    };
+    my $dbh;
+    if ($opt{taxon_nodes} && $opt{taxon_names} && $opt{taxon_dir}) {
+        eval {
+            $dbh = Bio::DB::Taxonomy->new(
+                -source    => 'flatfile',
+                -nodesfile => $opt{taxon_nodes},
+                -namesfile => $opt{taxon_names},
+                -directory => $opt{taxon_dir} );
+            $taxon = $dbh->get_taxon( -taxonid => $id );
+        };
+    } else {
+        eval {
+            $dbh = Bio::DB::Taxonomy->new(-source => 'entrez');
+            $taxon = $dbh->get_taxon( -taxonid => $id );
+        };
+    }
+
     if ($@) {
         print STDERR "WARNING: Failed to connect to taxonomy database. No internet access?\n";
     } 
     unless ($taxon) {
-        print STDERR "WARNING: Could not retrieven taxon information for ID: $id\n";
+        print STDERR "WARNING: Could not retrieve taxon information for ID: $id\n";
     } else {
         $taxon_id   = $taxon->id;
         $taxon_name = $taxon->scientific_name;
@@ -1456,6 +1471,16 @@ sub getScaffoldFragments {
     return $hash;
 }
 
+sub logcommand {
+    if ($opt{debug}) {
+        my ($dir, $command) = @_;
+
+        open my $commandlog, ">>", "$dir/commands.txt"
+            or die "Can't open file for reading: $dir";
+        print $commandlog "$command\n";
+        close $commandlog;
+    }
+}
 
 1;
 

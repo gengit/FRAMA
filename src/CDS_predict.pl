@@ -505,7 +505,9 @@ sub getCDSbyMSA {
                     $seq_start   = ($-[0] * 3) + $start + 1;
                     $prot        = $1 . $prot;
                     $status->[0] = 1;
-                    $exons->[0]->[0] = $seq_start;
+                    if ($exons) {
+                        $exons->[0]->[0] = $seq_start;
+                    }
                 }
             }
 
