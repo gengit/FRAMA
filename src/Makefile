@@ -1,6 +1,8 @@
 #       AUTHOR: Martin Bens, bensmartin@gmail.com
 # ORGANIZATION: FLI Jena
 
+FRAMA_VERSION := 20160522
+
 SHELL := /bin/bash
 
 .SECONDEXPANSION:
@@ -229,7 +231,8 @@ info: | $(OUTPUT_DIR)/.c
 	@printf "$(P_INFO) Starting FRAMA...\n"
 	@printf "$(P_OUT) $(OUTPUT_DIR)/parameters.cfg [parameter file]\n"
 	@printf "$(P_OUT) $(OUTPUT_DIR) [output directory]\n\n"
-	@cp $(FILE) $(OUTPUT_DIR)/parameters.cfg
+	@printf "#\n# FRAMA Version: $(FRAMA_VERSION)\n#\n" > $(OUTPUT_DIR)/parameters.cfg
+	@cat $(FILE) >> $(OUTPUT_DIR)/parameters.cfg
 
 check: $(FILE) | $(LOG_DIR)/.c $(TABLE_DIR)/.c $(TRANS_DIR)/.c \
 	$(TRINITY_DIR)/.c $(BLAST_DIR)/.c $(BBH_DIR)/.c $(ASSEMBLY_DIR)/.c \
