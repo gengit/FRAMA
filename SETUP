@@ -4,10 +4,10 @@ wget_options="-q"
 bar="############################################################"
 
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do 
+while [ -h "$SOURCE" ]; do
     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
     SOURCE="$(readlink "$SOURCE")"
-    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" 
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
@@ -27,7 +27,7 @@ mypackages = c("plyr", "ggplot2", "reshape", "gridExtra", "grid")
 installme = mypackages[!(mypackages %in% installed.packages()[,"Package"])]
 if(length(installme) > 0) {
     install.packages(installme, repos =  "http://cran.us.r-project.org", lib = personal.lib)
-} 
+}
 
 # Bioconductor
 source("http://bioconductor.org/biocLite.R")
@@ -35,7 +35,7 @@ mypackages = c("GO.db", "org.Hs.eg.db", "KEGG.db")
 installme = mypackages[!(mypackages %in% installed.packages()[,"Package"])]
 if(length(installme) > 0) {
     biocLite(installme, suppressAutoUpdate = T, suppressUpdates = T, lib = personal.lib)
-} 
+}
 
 END
 
@@ -68,7 +68,7 @@ BOWTIE2="http://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.2.6/bowtie2-
 MAFFT="http://mafft.cbrc.jp/alignment/software/mafft-7.245-linux.tgz"
 GENBLASTA="http://genome.sfu.ca/genblast/latest/genblasta_v1.0.4_linux_x86_64"
 BAMTOOLS="https://github.com/pezmaster31/bamtools/archive/v2.4.0.zip"
-TRINITY="https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.0.6.tar.gz"
+TRINITY="https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.2.0.tar.gz"
 SAMTOOLS="http://sourceforge.net/projects/samtools/files/samtools/1.2/samtools-1.2.tar.bz2/download"
 PARALLEL="http://ftp.gnu.org/gnu/parallel/parallel-20150922.tar.bz2"
 EMBOSS="http://science-annex.org/pub/emboss/EMBOSS-6.6.0.tar.gz"
@@ -80,7 +80,7 @@ BLAST_BIN=""
 if [[ ! $(which blastn 2> /dev/null) ]]; then
     print_stuff "NCBI-BLAST"
     wget $wget_options --ftp-user=anonymous --ftp-password=anonymous $BLAST
-    tar zxf ncbi-blast-2.2.31+-x64-linux.tar.gz 
+    tar zxf ncbi-blast-2.2.31+-x64-linux.tar.gz
     rm ncbi-blast-2.2.31+-x64-linux.tar.gz
     BLAST_BIN=$(readlink -f ncbi-blast-2.2.31+/bin)
 
@@ -110,7 +110,7 @@ if [[ ! $(which RepeatMasker 2> /dev/null) ]]; then
     installedRepMask=1
     print_stuff "RMBLAST"
     wget $wget_options --ftp-user=anonymous --ftp-password=anonymous $RMBLAST
-    tar zxf ncbi-rmblastn-2.2.28-x64-linux.tar.gz 
+    tar zxf ncbi-rmblastn-2.2.28-x64-linux.tar.gz
     rm ncbi-rmblastn-2.2.28-x64-linux.tar.gz
 
     RMBLAST_BIN=$(readlink -f ncbi-rmblastn-2.2.28/bin)
@@ -141,12 +141,12 @@ EOF
 
     print_stuff "RepeatMasker"
     wget $wget_options $REPEATMASKER
-    tar xzf RepeatMasker-open-4-0-5.tar.gz 
+    tar xzf RepeatMasker-open-4-0-5.tar.gz
     rm RepeatMasker-open-4-0-5.tar.gz
     mv RepeatMasker RepeatMasker_4-0-5
 
     PERL_BIN=$(which perl)
-    cd RepeatMasker_4-0-5 
+    cd RepeatMasker_4-0-5
     printf "\n$PERL_BIN\n\n$TRF_BIN\n2\n$RMBLAST_BIN\nY\n5\n" | perl configure
     cd ..
 
@@ -156,7 +156,7 @@ fi
 if [[ ! $(which tgicl 2> /dev/null) ]]; then
     print_stuff "TGICL"
     wget $wget_options --ftp-user=anonymous --ftp-password=anonymous $TGICL
-    tar zxf tgicl_linux.tar.gz 
+    tar zxf tgicl_linux.tar.gz
     rm tgicl_linux.tar.gz
 fi
 
@@ -164,7 +164,7 @@ if [[ ! $(which bowtie 2> /dev/null) ]]; then
     print_stuff "Bowtie1"
     wget $wget_options $BOWTIE1
     mv download bowtie1.zip
-    unzip -qq bowtie1.zip 
+    unzip -qq bowtie1.zip
     rm bowtie1.zip
 
     ln -s bowtie-1.1.2/bowtie .
@@ -185,7 +185,7 @@ fi
 if [[ ! $(which mafft 2> /dev/null) ]]; then
     print_stuff "MAFFT"
     wget $wget_options $MAFFT
-    tar zxf mafft-7.245-linux.tgz 
+    tar zxf mafft-7.245-linux.tgz
     rm mafft-7.245-linux.tgz
 
     cd mafft-linux64
@@ -201,20 +201,20 @@ if [[ ! $(which genblasta 2> /dev/null) ]]; then
 fi
 
 # --------------------------------------------------------------------
-# SOURCES 
+# SOURCES
 # --------------------------------------------------------------------
 
 if [[ ! $(which bamtools 2> /dev/null) ]]; then
     print_stuff "BamTools"
     wget $wget_options $BAMTOOLS
     mv v2.4.0.zip bamtools.zip
-    unzip -qq bamtools.zip 
+    unzip -qq bamtools.zip
     rm bamtools.zip
-    cd bamtools-2.4.0 
+    cd bamtools-2.4.0
     mkdir -p build
-    cd build 
+    cd build
     cmake ..
-    make 
+    make
     cd ../..
 
     ln -s bamtools-2.4.0/bin/bamtools .
@@ -225,8 +225,8 @@ if [[ ! $(which cd-hit-est 2> /dev/null) ]]; then
     wget $wget_options $CDHIT
     tar zxf cd-hit-v4.6.4-2015-0603.tar.gz
     rm cd-hit-v4.6.4-2015-0603.tar.gz
-    cd cd-hit-v4.6.4-2015-0603 
-    make 
+    cd cd-hit-v4.6.4-2015-0603
+    make
     cd ..
 
     ln -s cd-hit-v4.6.4-2015-0603/cd-hit-est cdhit-est
@@ -235,9 +235,9 @@ fi
 if [[ ! $(which needle 2> /dev/null) ]]; then
     print_stuff "EMBOSS"
     wget $wget_options $EMBOSS
-    tar zxf EMBOSS-6.6.0.tar.gz 
+    tar zxf EMBOSS-6.6.0.tar.gz
     rm -rf EMBOSS-6.6.0.tar.gz
-    cd EMBOSS-6.6.0 && ./configure --without-x && make 
+    cd EMBOSS-6.6.0 && ./configure --without-x && make
     cd ..
 
     ln -s EMBOSS-6.6.0/emboss/needle .
@@ -246,13 +246,13 @@ fi
 
 if [[ ! $(which parallel 2> /dev/null) ]]; then
     print_stuff "Parallel"
-    wget $wget_options $PARALLEL 
-    tar xfj parallel-20150922.tar.bz2 
+    wget $wget_options $PARALLEL
+    tar xfj parallel-20150922.tar.bz2
     rm parallel-20150922.tar.bz2
-    cd parallel-20150922 
-    ./configure --prefix $(pwd) 
-    make 
-    make install 
+    cd parallel-20150922
+    ./configure --prefix $(pwd)
+    make
+    make install
     cd ..
 
     ln -s parallel-20150922/bin/parallel .
@@ -262,10 +262,10 @@ if [[ ! $(which samtools 2> /dev/null) ]]; then
     print_stuff "SAMTOOLS"
     wget $wget_options $SAMTOOLS
     mv download samtools.tar.bz2
-    tar xfj samtools.tar.bz2 
+    tar xfj samtools.tar.bz2
     rm samtools.tar.bz2
-    cd samtools-1.2 
-    make prefix=$(pwd) 
+    cd samtools-1.2
+    make prefix=$(pwd)
     cd ..
 
     ln -s samtools-1.2/samtools .
@@ -274,11 +274,11 @@ fi
 if [[ ! $(which Trinity.pl 2> /dev/null) ]]; then
     print_stuff "Trinity"
     wget $wget_options $TRINITY
-    tar zxf v2.0.6.tar.gz 
-    rm v2.0.6.tar.gz
-    cd trinityrnaseq-2.0.6 
-    make 
-    ln -s Trinity Trinity.pl
+    tar zxf v2.2.0.tar.gz
+    rm v2.2.0.tar.gz
+    cd trinityrnaseq-2.2.0
+    make
+    #ln -s Trinity Trinity.pl
     cd ..
 fi
 
@@ -288,14 +288,14 @@ if [[ $installedRepMask == 1 ]]; then
 printf "\n$bar\n"
 cat <<EOF
 RepeatMasker has been installed, but in order to use it you must download a
-repeat library and move it to bin/RepeatMasker_4-0-5/Libraries. 
+repeat library and move it to bin/RepeatMasker_4-0-5/Libraries.
 
-Repeat library: 
+Repeat library:
     http://www.girinst.org/server/RepBase/
 
 Example:
-    cd bin/RepeatMasker_4-0-5/Libraries 
-    wget $wget_options --user=__USER__ --password=__PW__ http://www.girinst.org/server/RepBase/protected/repeatmaskerlibraries/repeatmaskerlibraries-20150807.tar.gz 
+    cd bin/RepeatMasker_4-0-5/Libraries
+    wget $wget_options --user=__USER__ --password=__PW__ http://www.girinst.org/server/RepBase/protected/repeatmaskerlibraries/repeatmaskerlibraries-20150807.tar.gz
     tar -xzf repeatMaskerlibraries-20150807.tar.gz
     mv Libraries/* . && rm -rf Libraries
 EOF

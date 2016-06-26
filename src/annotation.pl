@@ -10,8 +10,8 @@ bensmartin@gmail.com
 
 =head1 DESCRIPTION
 
-Wrapper, that calls all steps necessary to scaffold, trim and predict CDS based
-on assigned orthologs. 
+Wrapper that calls all steps necessary to scaffold, trim and predict CDS based
+on assigned orthologs.
 
 =head1 OPTIONS
 
@@ -31,12 +31,13 @@ Taxonomy ID of reference species.
 
 =item B<-species-order>
 
-We keep a note in GenBank output about the ortholog, used to annotated CDS.
-Please specify prefered order of species, multiple equal regions originating
-from different species have been found. Number (0-based!) refers column in
--ortholog-table. If not specied, column order of -ortholog-table will be used.
+We keep a note in GenBank output about the ortholog that was used to annotated
+CDS. Please specify prefered order of species if multiple equally valid regions
+originating from different species were identifed. Number (0-based!) refers to
+column in -ortholog-table. If not specied the column order of -ortholog-table
+will be used.
 
-=item B<-ortholog-cds> 
+=item B<-ortholog-cds>
 
 Fasta file containing all coding sequences for accessions used in
 -ortholog-table.
@@ -51,43 +52,46 @@ Reference Transcriptome
 
 =item B<-assignment> annotation.csv
 
-Annotation: Trinity_annotation.csv,
 
-=item B<-ortholog> 
+=item B<-ortholog>
 
 Only write genbank entries for specific transcripts. Comma separated list of
 accession numbers.
 
-=item B<-ortholog-file> 
+=item B<-ortholog-file>
 
-=item B<-contig> 
+Reference Transcriptome.
+
+=item B<-contig>
 
 Only write genbank entries for specific contigs. Comma separated list of contig
 ids.
 
-=item B<-contig-file> 
+=item B<-contig-file>
 
-=item B<-output-file> 
+Specify contigs to process (one contig ID per line).
+
+=item B<-output-file>
 
 Output GenBank file.
 
-=item B<-new> 
+=item B<-new>
 
-Specify if you want to rebuild a transcript (computes all steps again). 
+Specify if you want to rebuild a transcript (computes all steps again).
 
-=item B<-cpus> 
+=item B<-cpus>
 
 Number of CPUs
 
-=item B<-scaffolding> 
+=item B<-scaffolding>
 
 Blast result with fragments for scaffolding.
 
-=item B<-blast> 
+=item B<-blast>
 
 Blast result to annotated CDS predicted by GENSCAN.
 
-=item B<-genscan-matrix> 
+=item B<-genscan-matrix>
 
 Path to matrix to use for GENSCAN.
 
@@ -217,7 +221,7 @@ push @missing_files, "Assignment table not found."
   unless ( -e $opt{assignment} );
 push @missing_files, "Reference transcriptome not found."
   unless ( -e $opt{reference} );
-push @missing_files, "Trinity output not found." 
+push @missing_files, "Trinity output not found."
   unless ( -e $opt{trinity} );
 push @missing_files, "Blast results for CDS annotation not found."
   unless ( -e $opt{blast} );
@@ -632,8 +636,7 @@ sub process {
     #
     # Example:
     #   DEFINITION  Heterocephalus glaber (BHMT) mRNA
-    my $description =
-      "$taxon_name ($obj{orth_sym}) " . $obj{orth_seq}->molecule;
+    my $description = "$taxon_name ($obj{orth_sym}) " . $obj{orth_seq}->molecule;
 
     my $annotated_contig;
     if ($taxon) {
@@ -685,6 +688,25 @@ sub process {
       . timestr( timediff( $te, $t0 ) ) . "\n";
 }
 
+sub componentName {
+    my ($id) = @_;
+
+	if ($id =~ /_DN(\d+)_/) {
+		# de novo assembly; since 2.1: TRINITY_DN27_c0_g1_i1
+		return "c$1";
+	} elsif ($id =~ /_GG_(\d+)_/) {
+		return "c$1";
+	} elsif ($id =~ /.+?(c\d+)[\._]/) {
+		# de novo; 2013 - 2014: c3.graph_c0_seq1
+		# previously comp1000215_c0_seq1 (no longer supported)
+		return $1;
+	}
+
+	print STDERR "Unknown Trinity naming pattern: $id.\n";
+	print STDERR "mRNA clipping based on coverage and poly(A) reads will not work!\n";
+	return undef;
+}
+
 sub indexTGICL {
     my ($file) = @_;
 
@@ -698,7 +720,8 @@ sub indexTGICL {
                 my $clusterid = $1;
                 my %components;
                 for (@elements) {
-                    $components{$1} = 1 if (/^(.+?)[\._]/);
+					my $c_name = componentName($_);
+                    $components{$c_name} = 1;
                 }
                 $tgicl{$clusterid} = [ keys %components ];
             }
@@ -713,17 +736,21 @@ sub getReadFiles {
 
     my %components;
     for my $frag_id (@ids) {
-        if ( $frag_id =~ /^(.+?)[\._]/ ) {
-
-            # Example: c121735.graph_c0_seq1
-            $components{$1} = 1;
-        } elsif ( defined $tgicl && $frag_id =~ /^CL(\d+)Contig(\d+)/ ) {
-
-            # TGICL Clusters
+        if ( defined $tgicl && $frag_id =~ /^CL(\d+)Contig(\d+)/ ) {
+			# TGICL Clusters
             for my $member ( @{ $tgicl->{$frag_id} } ) {
                 $components{$member} = 1;
             }
-        }
+        } elsif ($frag_id =~ /GG/) {
+			# genome guided approach
+			# print STDERR "Genome guided: not implemement\n";
+			my $c_name = componentName($frag_id);
+            $components{$c_name} = 1;
+		} else {
+			# de novo assembly
+			my $c_name = componentName($frag_id);
+            $components{$c_name} = 1;
+		}
     }
 
     my @readfiles;
@@ -811,7 +838,7 @@ sub performClipping {
 
         my $command =  join " ", @command;
         logcommand($obj->{transcript_dir}, $command);
-        
+
         # RUN
         my $failed = system( $command );
         if ($failed) {
@@ -1400,7 +1427,7 @@ sub getTaxon {
 
     if ($@) {
         print STDERR "WARNING: Failed to connect to taxonomy database. No internet access?\n";
-    } 
+    }
     unless ($taxon) {
         print STDERR "WARNING: Could not retrieve taxon information for ID: $id\n";
     } else {

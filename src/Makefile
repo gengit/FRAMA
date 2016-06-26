@@ -23,7 +23,7 @@ endif
 ifndef OUTPUT_DIR
 $(error OUTPUT_DIR not defined!)
 endif
- 
+
 # }}}
 # VARIABLES & FUNCTIONS {{{
 # -----------------------------------------------------------------------------
@@ -64,6 +64,7 @@ FINAL_GENBANK  := $(OUTPUT_DIR)/transcriptome
 FINAL_SUMMARY := $(OUTPUT_DIR)/annotation
 FINAL_KEGG    := $(OUTPUT_DIR)/annotation_KEGG
 FINAL_GO      := $(OUTPUT_DIR)/annotation_GO
+
 
 # we need space
 NOTHING :=
@@ -107,8 +108,13 @@ else
 COMMAND_SUM_BLAST := perl wublast_average.pl
 endif
 
+
 COMMAND_TRINITY := $(shell export PATH="$(EPATHS)" && { command -v Trinity || command -v Trinity.pl; })
 COMMAND_CDHIT   := $(shell export PATH="$(EPATHS)" && { command -v cd-hit-est || command -v cdhit-est; })
+
+# determine trinity version
+PERL := perl -ne 'chomp; s/.+[vr](.+)$$/$$1/g; s/[_.]//g; print length'
+TRINITY_VERSION := $(shell $(COMMAND_TRINITY) --version | grep version | $(PERL))
 
 # }}}
 # DEFAULT PARAMETER {{{
@@ -341,7 +347,6 @@ endif
 # - JVM decides how many garbage collection threads to use => we limit
 #   GC-threads to one and start half of allowed process in parallel
 
-
 $(TRINITY_DIR)/Trinity.fasta : $(READ_LINKS)
 	@printf "$(P_INFO) Starting Trinity.\n"
 
@@ -357,10 +362,10 @@ endif
 
 ifneq (,$(findstring Trinity.pl,$(COMMAND_TRINITY)))
 	@printf "$(P_LOG)/inchworm.log\n"
-	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_chrysalis $(OPT_TRINITY) &> $(LOG_DIR)/inchworm.log 
+	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_chrysalis $(OPT_TRINITY) &> $(LOG_DIR)/inchworm.log
 
 	@printf "$(P_LOG)/chrysalis.log\n"
-	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_quantifygraph $(OPT_TRINITY) $(OPT_BUTTERFLY) &> $(LOG_DIR)/chrysalis.log 
+	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_quantifygraph $(OPT_TRINITY) $(OPT_BUTTERFLY) &> $(LOG_DIR)/chrysalis.log
 
 	@printf "$(P_LOG)/quanitfyGraph.log\n"
 	ulimit -s unlimited; cat $(dir $@)/chrysalis/quantifyGraph_commands | parallel --max-procs $(OPT_CPUS) --joblog $(LOG_DIR)/quantifyGraph.log
@@ -375,6 +380,10 @@ ifneq (,$(findstring Trinity.pl,$(COMMAND_TRINITY)))
 else
 	@printf "$(P_LOG)/Trinity.log\n\n"
 	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) $(OPT_TRINITY) > $(LOG_DIR)/Trinity.log
+endif
+
+ifneq (,$(findstring genome_guided_bam,$(OPT_TRINITY)))
+	mv $(TRINITY_DIR)/Trinity-GG.fasta $@
 endif
 
 $(RAW_ASSEMBLY).fa : $(TRINITY_DIR)/Trinity.fasta | $(ASSEMBLY_DIR)/.c
@@ -521,8 +530,6 @@ $(BLAST_DIR)/raw_CDS_trin2ref.csv : $(MASKED_REF_CDS) $(PRIPRO_ASSEMBLY).masked.
 	@printf "$(P_OUT) $@\n\n"
 	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/blast_cds2trin.log
 
-
-
 # BLAST mRNA
 $(BLAST_DIR)/avg_mRNA_ref2trin.csv :$(BLAST_DIR)/raw_mRNA_ref2trin.csv $(PRIPRO_ASSEMBLY).masked.fa.fai $(REF_DIR)/ref_transcriptome.fa.fai
 	@printf "$(P_INFO) query=reference database=assembly\n"
@@ -613,12 +620,21 @@ $(ASSEMBLY_DIR)/annotated.gbk : $(PRIPRO_ASSEMBLY).fa $(REF_TRANSCRIPTOME) \
 			> $(LOG_DIR)/annotation.log \
 			2> $(LOG_DIR)/annotation.err
 
-# index path to read files
+ifeq (3,$(TRINITY_VERSION))
+# at least since Version 2.1
+ifneq (,$(findstring genome_guided_bam,$(OPT_TRINITY)))
+# genome guided
 $(TRINITY_DIR)/dir2comp.csv : $(TRINITY_DIR)/Trinity.fasta
-ifeq (,$(findstring Trinity.pl,$(COMMAND_TRINITY)))
-	find $(TRINITY_DIR) -name "*trinity.reads.fa" | perl -ne 'chomp; $$a = $$_; $$a=~s/^.+\/(c\d+).trinity.reads.fa$$/$$1/g; print "$$a\t$$_\n"' > $@
+	perl find_ggreadlist.pl $(TRINITY_DIR) $(TRINITY_DIR)/Trinity.fasta | perl -pe 's/TRINITY_GG_(\d+)_.+?\s/c$$1\t/g' | sort -k1,1V  | first_occurence.pl > $@
 else
-	find $(TRINITY_DIR) -name "*.reads.tmp" | perl -ne 'chomp; $$a = $$_; $$a=~s/^.+\/(c\d+).reads.tmp$$/$$1/g; print "$$a\t$$_\n"' > $@
+# de novo
+$(TRINITY_DIR)/dir2comp.csv : $(TRINITY_DIR)/Trinity.fasta $(TRINITY_DIR)/partitioned_reads.files.list
+	cat $(TRINITY_DIR)/partitioned_reads.files.list | perl -ne 'chomp; $$a = $$_; $$a =~ s/^.+\/(c\d+).trinity.reads.fa$$/$$1/g; print "$$a\t$$_\n"' > $@
+endif
+else
+# Versions: 2013 - 2014
+$(TRINITY_DIR)/dir2comp.csv : $(TRINITY_DIR)/Trinity.fasta
+	find $(TRINITY_DIR) -name "*.reads.tmp" | perl -ne 'chomp; $$a = $$_; $$a =~ s/^.+\/(c\d+).reads.tmp$$/$$1/g; print "$$a\t$$_\n"' > $@
 endif
 
 $(TRINITY_DIR)/dir2comp.index : $(TRINITY_DIR)/dir2comp.csv
