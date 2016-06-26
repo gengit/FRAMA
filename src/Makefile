@@ -1,7 +1,7 @@
 #       AUTHOR: Martin Bens, bensmartin@gmail.com
 # ORGANIZATION: FLI Jena
 
-FRAMA_VERSION := 20160522
+FRAMA_VERSION := 20160626_development
 
 SHELL := /bin/bash
 
