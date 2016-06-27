@@ -53,7 +53,7 @@ Further details: [Unpublished]
 
 # Input
 
-All you need is a [reference transcriptome](http://ftp.ncbi.nlm.nih.gov/genomes/) 
+All you need is a [reference transcriptome](http://ftp.ncbi.nlm.nih.gov/genomes/)
 in GenBank format and RNA-seq data in FastQ format. You can also provide
 orthologs to your reference transcripts from other species. The additional
 homologs are used for CDS inference.
@@ -64,35 +64,35 @@ FRAMA runs on Linux and is written in Perl (5.10.0), R (3.0.3) and GNU Make
 (3.81). FRAMA does not require any compilation, but relies on common
 bioinformatic applications to be installed. The installation of all external
 software packages might seem like a daunting task, but your package manager
-might bring you halfway through (see Installation). 
+might bring you halfway through (see Installation).
 
 ## Bioinformatic Software
 
-| Software      | Link                                          | Description |
-| ------------- | ----------------------------------------------| ----------- |
-| Trinity       | http://trinityrnaseq.sourceforge.net/         | mandatory   |
-| samtools      | http://samtools.sourceforge.net               | mandatory   |
-| bamtools      | https://github.com/pezmaster31/bamtools       | mandatory   |
-| bowtie1       | http://bowtie-bio.sourceforge.net/bowtie1     | mandatory   |
-| bowtie2       | http://bowtie-bio.sourceforge.net/bowtie2     | mandatory   |
-| EMBOSS        | http://emboss.sourceforge.net                 | mandatory   |
-| MAFFT         | http://mafft.cbrc.jp/alignment/software       | mandatory   |
-| GENSCAN       | http://genes.mit.edu/license.html             | mandatory   |
-| RepeatMasker  | http://www.repeatmasker.org/                  | optional    |
-| CD-HIT-EST    | http://weizhong-lab.ucsd.edu/cd-hit/          | optional    |
-| TGICL         | http://compbio.dfci.harvard.edu/tgi/software/ | optional    |
-| WU-BLAST      | http://blast.advbiocomp.com                   | mandatory   |
+| Software      | Link                                           | Description | Tested Version(s)                         |
+| ------------- | ---------------------------------------------- | ----------- | ----------------------------------------- |
+| Trinity       | http://trinityrnaseq.sourceforge.net/          | mandatory   | r20130814<br>r20140717<br> v2.2 [including genome-guided] |
+| samtools      | http://samtools.sourceforge.net                | mandatory   | 0.1.19-44428cd, 1.3.1                     |
+| bamtools      | https://github.com/pezmaster31/bamtools        | mandatory   | 2.3.0                                     |
+| bowtie1       | http://bowtie-bio.sourceforge.net/bowtie1      | mandatory   |                                           |
+| bowtie2       | http://bowtie-bio.sourceforge.net/bowtie2      | mandatory   |                                           |
+| EMBOSS        | http://emboss.sourceforge.net                  | mandatory   | 6.6.0.0                                   |
+| MAFFT         | http://mafft.cbrc.jp/alignment/software        | mandatory   | v7.164b                                   |
+| GENSCAN       | http://genes.mit.edu/license.html              | mandatory   | 1                                         |
+| RepeatMasker  | http://www.repeatmasker.org/                   | optional    | open-4.0.5                                |
+| CD-HIT-EST    | http://weizhong-lab.ucsd.edu/cd-hit/           | optional    | 4.6                                       |
+| TGICL         | http://compbio.dfci.harvard.edu/tgi/software/  | optional    |                                           |
+| WU-BLAST      | http://blast.advbiocomp.com                    | mandatory   | 2.0MP-WashU                               |
 
 In case you do not use WU-BLAST:
 
-| Software       | Link                                          | Description |
-| -------------- | --------------------------------------------- | ----------- |
-| NCBI-BLAST     | http://www.ncbi.nlm.nih.gov/books/NBK279671/  | mandatory   |
-| GenblastA      | http://genome.sfu.ca/genblast/download.html   | mandatory   |
+| Software       | Link                                          | Description | Tested Version(s) |
+| -------------- | --------------------------------------------- | ----------- | ----------------- |
+| NCBI-BLAST     | http://www.ncbi.nlm.nih.gov/books/NBK279671/  | mandatory   | 2.2.16            |
+| GenblastA      | http://genome.sfu.ca/genblast/download.html   | mandatory   | v1.0.1            |
 
 ## Perl Modules
 
-Available via CPAN. 
+Available via CPAN.
 
 | Module                | Version  |
 | --------------------- | -------- |
@@ -101,7 +101,7 @@ Available via CPAN.
 | Set::IntSpan          | 1.19     |
 | FileHandle::Unget     | 0.1628   |
 
-## R Packages 
+## R Packages
 
 | Package               | Version  |
 | --------------------- | -------- |
@@ -143,7 +143,7 @@ For instance, on Ubuntu (15.04, Vivid Vervet) :
         bamtools samtools parallel libc6-i386 build-essential \
         bioperl libparallel-forkmanager-perl libset-intspan-perl \
         libfilehandle-unget-perl r-cran-ggplot2 r-cran-plyr \
-        r-cran-reshape 
+        r-cran-reshape
 
 Left to install manually:
 
@@ -222,7 +222,7 @@ This also serves as a template for your custom configuration.
 
 The following depends mostly on your `$PATH` variable. Specify path to
 **directories**(!) of executables for each program that is not in your `$PATH`.
-Otherwise, remove line or leave empty. 
+Otherwise, remove line or leave empty.
 
         PATH_BAMTOOLS     :=
         PATH_BOWTIE       :=
@@ -237,12 +237,12 @@ Otherwise, remove line or leave empty.
         PATH_SAMTOOLS     :=
         PATH_TGICL        :=
         PATH_TRINITY      :=
-        PATH_BLAST        := 
+        PATH_BLAST        :=
 
 Indicate whether WU- or NCBI-BLAST should be used [0 WU, 1 NCBI].
- 
+
         NCBI_BLAST := 1
-        
+
 Store intermediate and final files in specified location. Make sure that enough
 space is available to store intermediate output of trinity, blast results, read
 alignments, ...).
@@ -350,6 +350,12 @@ Added automatically: `--no_cleanup`
 
         OPT_TRINITY   := --JM 10G --seqType fa
         OPT_BUTTERFLY :=
+
+Genome-guided mode:
+
+Genom-guided mode is experimental. Simply add the required
+`--genome_guided_bam` and `--genome_guided_max_intron` parameter to
+`OPT_TRINITY`.
 
 ### RepeatMasker
 
