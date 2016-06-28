@@ -1,4 +1,4 @@
-#! /usr/local/bin/perl
+#!/usr/bin/env perl
 ################################################################################
 #
 #  polyacov_dropcov_simple.pl

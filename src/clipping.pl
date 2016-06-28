@@ -699,7 +699,7 @@ sub UTRaln {
     my @command = (
         "$^X", "$FindBin::Bin/polyamisc/UTR.pl", "-end-gap 0.5",
         "-i $args->{output_aln} |",
-        "$opt{PATH_POLYA}polyahomol_score.pl - >",
+        "$^X $opt{PATH_POLYA}polyahomol_score.pl - >",
         $args->{output_txt}
     );
     $failed = system(join " ", @command);
@@ -720,7 +720,7 @@ sub polyAreads {
     my @commands = (
         "$^X $FindBin::Bin/polyamisc/bam_polyA.pl",
         "-i $args->{input}.bam |",
-        "$opt{PATH_POLYA}/polyaread_score.pl -d $args->{cov} - >",
+        "$^X $opt{PATH_POLYA}/polyaread_score.pl -d $args->{cov} - >",
         $args->{output}
     );
     return system(join " ", @commands);

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 mydir=$(dirname $0)  # program directory
 if [ "$mydir" == "${mydir#/}" ] ; then mydir=$(pwd)/$mydir ; fi
 inf=$1

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 mydir=$(dirname $0)  # program directory
 inf=$1
 tmp=/tmp/polyaspwmimg$$
