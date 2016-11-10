@@ -18,7 +18,12 @@ RNA-seq data and a reference transcriptome, FRAMA performs 4 steps:
     3) fusion detection and scaffolding
     4) contig annotation (CDS, mRNA boundaries).
 
-Further details: [Unpublished]
+Further details ([link](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4712544/)): 
+
+    Bens M, Sahm A, Groth M, et al. FRAMA: from RNA-seq data to annotated mRNA assemblies. 
+    BMC Genomics. 2016;17:54. doi:10.1186/s12864-015-2349-8.
+
+# Contents
 
 - [Input](#input)
 - [Requirements](#requirements)
