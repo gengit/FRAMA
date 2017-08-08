@@ -348,8 +348,8 @@ $(TRINITY_DIR)/Trinity.fasta : $(READ_LINKS)
 	$(eval options := --output $(dir $@))
 
 ifeq ($(OPT_READTYPE),pe)
-	$(eval read_R1 := $(strip $(FILTER $^,"_R1")))
-	$(eval read_R2 := $(strip $(FILTER $^,"_R2")))
+	$(eval read_R1 := $(sort $(strip $(call FILTER,_R1,$^))))
+	$(eval read_R2 := $(sort $(strip $(call FILTER,_R2,$^))))
 	$(eval options += --left $(read_R1) --right $(read_R2))
 else
 	$(eval options += --single $^)
