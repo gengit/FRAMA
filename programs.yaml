@@ -1,0 +1,152 @@
+-
+ description: Bamtools
+ remote: https://github.com/pezmaster31/bamtools/archive/v2.4.1.zip
+ extension: zip
+ dir: bamtools-2.4.1
+ links: bin/bamtools
+ executable: bamtools
+ compile: |
+    mkdir -p build
+    cd build
+    cmake ..
+    make
+-
+ description: Blast
+ remote: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.31/ncbi-blast-2.2.31+-src.tar.gz
+ links: bin/blastn bin/makeblastdb bin/blastx
+ executable: blastn makeblastdb blastx
+ extension: tar.gz
+ wget: --ftp-user=anonymous --ftp-password=anonymous
+ dir: ncbi-blast-2.2.31+-src/
+ compile: |
+   cd c++
+   #./configure --prefix=$(pwd)/.. &> FRAMA_install.log
+   C=/usr/bin/gcc-4.9 CXX=/usr/bin/g++-4.9 ./configure --prefix=$(pwd)/..
+   make &>> FRAMA_install.log
+   make install &>> FRAMA_install.log
+
+-
+ description: bowtie1
+ remote: http://sourceforge.net/projects/bowtie-bio/files/bowtie/1.1.2/bowtie-1.1.2-linux-x86_64.zip/download
+ extension: zip
+ dir: bowtie-1.1.2
+ links: bowtie bowtie-build
+ executable: bowtie bowtie-build
+-
+ description: bowtie2
+ remote: http://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip/download
+ extension: zip
+ dir: bowtie2-2.2.6
+ links: bowtie2 bowtie2-build
+ executable: bowtie2 bowtie2-build
+-
+ description: cd-hit-est
+ remote: https://github.com/weizhongli/cdhit/releases/download/V4.6.4/cd-hit-v4.6.4-2015-0603.tar.gz
+ extension: tar.gz
+ dir:  cd-hit-v4.6.4-2015-0603
+ links: cd-hit-est
+ executable: cd-hit-est
+ compile: |
+   make
+-
+ description: EMBOSS
+ remote: http://science-annex.org/pub/emboss/EMBOSS-6.6.0.tar.gz
+ extension: tar.gz
+ dir: EMBOSS-6.6.0
+ links: emboss/needle emboss/getorf
+ executable: needle getorf
+ compile: |
+    ./configure --without-x && make
+-
+ description: genblasta
+ remote: http://genome.sfu.ca/genblast/latest/genblasta_v1.0.4_linux_x86_64
+ links: genblasta
+ executable: genblasta
+ command: |
+   chmod +x genblasta
+-
+ description: mafft
+ remote: http://mafft.cbrc.jp/alignment/software/mafft-7.245-linux.tgz
+ extension: tar.gz
+ dir: mafft-linux64
+ links: mafft.bat
+ executable: mafft
+-
+ description: parallel
+ remote: http://ftp.gnu.org/gnu/parallel/parallel-20150922.tar.bz2
+ extension: tar.bz2
+ dir: parallel-20150922
+ links: bin/parallel
+ executable: parallel
+ compile: |
+    ./configure --prefix $(pwd)
+    make
+    make install
+-
+ description: repeatmasker
+ remote: http://www.repeatmasker.org/RepeatMasker-open-4-0-5.tar.gz
+ extension: tar.gz
+ dir: RepeatMasker
+ links: RepeatMasker
+ executable: RepeatMasker
+ compile: |
+    printf "\n$PERL_BIN\n\n$TRF_BIN\n2\n$RMBLAST_BIN\nY\n5\n" | perl configure
+    cd ..
+-
+ description: rmblast
+ remote: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/rmblast/LATEST/ncbi-rmblastn-2.2.28-x64-linux.tar.gz
+ dir: ncbi-rmblastn-2.2.28
+ links: bin/rmblastn
+ executable: rmblastn
+ extension: tar.gz
+ wget: --ftp-user anonymous --ftp-password anonymous
+-
+ description: samtools
+ remote: http://sourceforge.net/projects/samtools/files/samtools/1.2/samtools-1.2.tar.bz2/download
+ extension: tar.bz2
+ dir: samtools-1.2
+ links: samtools
+ executable: samtools
+ compile: |
+    make prefix=$(pwd)
+-
+ description: tgicl
+ remote: ftp://occams.dfci.harvard.edu/pub/bio/tgi/software/tgicl/tgicl_linux.tar.gz
+ dir: tgicl_linux
+ links: tgicl
+ executable: tgicl
+ extension: tar.gz
+ wget: --ftp-user anonymous --ftp-password anonymous
+-
+ description: trf
+ remote: http://tandem.bu.edu/trf/downloads/trf407b.linux64
+ licence: |
+   Tandem Repeats Finder License Terms
+
+   The author of this software grants to any individual or organization the
+   right to use and to make an unlimited number of copies of this software.
+   You may not de-compile, disassemble, reverse engineer, or modify the
+   software. This software cannot be sold, incorporated into commercial
+   software or redistributed. The author of this software accepts no
+   responsibility for damages resulting from the use of this software and
+   makes no warranty or representation, either express or implied, including
+   but not limited to, any implied warranty of merchantability or fitness for
+   a particular purpose. This software is provided as is, and the user assumes
+   all risks when using it.
+ links: trf
+ executable: trf
+-
+ description: trinity
+ remote: https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.0.6.tar.gz
+ links: Trinity
+ executable: Trinity
+ dir: trinityrnaseq-2.0.6
+ compile: |
+    make
+ extension: tar.gz
+-
+ description: UNIVEC
+ remote: ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec_Core
+ executable: UniVec_Core
+ wget: --ftp-user anonymous --ftp-password anonymous
+
