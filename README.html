@@ -1,0 +1,497 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="/home/mbens/Templates/pandoc/template_css_github.css" type="text/css" />
+</head>
+<body>
+<div id="TOC">
+<ul>
+<li><a href="#licence">Licence</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#contents">Contents</a></li>
+<li><a href="#input">Input</a></li>
+<li><a href="#requirements">Requirements</a><ul>
+<li><a href="#bioinformatic-software">Bioinformatic Software</a></li>
+<li><a href="#perl-modules">Perl Modules</a></li>
+<li><a href="#r-packages">R Packages</a></li>
+</ul></li>
+<li><a href="#installation">Installation</a><ul>
+<li><a href="#manual-installation-of-external-software">Manual Installation of external software</a></li>
+<li><a href="#automatic-installation-of-external-software">Automatic Installation of external software</a></li>
+</ul></li>
+<li><a href="#run">Run</a></li>
+<li><a href="#cleanup">Cleanup</a></li>
+<li><a href="#configuration">Configuration</a><ul>
+<li><a href="#mandatory-variables">mandatory variables</a></li>
+<li><a href="#optional">optional</a></li>
+<li><a href="#software-parameter">Software parameter</a></li>
+</ul></li>
+<li><a href="#output-files">Output files</a><ul>
+<li><a href="#important-files">important files</a></li>
+<li><a href="#intermediate-output">intermediate output</a></li>
+</ul></li>
+</ul>
+</div>
+<h1 id="licence">Licence</h1>
+<pre><code>This software was developed at the Leibniz Institute on Aging - Fritz Lipmann
+Institute (FLI; http://www.leibniz-fli.de/) under a mixed licensing model. This
+means that researchers at academic and non-profit organizations can use it for
+free, while for-profit organizations are required to purchase a license. By
+downloading the package you agree with conditions of the FLI Software License
+Agreement for Academic Non-commercial Research (FLI-LICENSE).</code></pre>
+<h1 id="introduction">Introduction</h1>
+<p>FRAMA is a <strong>transcriptome assembly and mRNA annotation pipeline</strong>, which utilizies external and newly developed software components. Starting with RNA-seq data and a reference transcriptome, FRAMA performs 4 steps:</p>
+<pre><code>1) de novo transcript assembly (Trinity),
+2) gene symbol assignment (best bidirectional blastn hit) and
+3) fusion detection and scaffolding
+4) contig annotation (CDS, mRNA boundaries).</code></pre>
+<p>Further details (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4712544/">link</a>):</p>
+<pre><code>Bens M et al. FRAMA: from RNA-seq data to annotated mRNA assemblies.
+BMC Genomics. 2016;17:54. doi:10.1186/s12864-015-2349-8.</code></pre>
+<h1 id="contents">Contents</h1>
+<ul>
+<li><a href="#input">Input</a></li>
+<li><a href="#requirements">Requirements</a></li>
+<li><a href="#bioinformatic-software">Bioinformatic Software</a></li>
+<li><a href="#perl-modules">Perl Modules</a></li>
+<li><a href="#r-packages">R Packages</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#manual-installation-of-external-software">Manual Installation of external software</a></li>
+<li><a href="#automatic-installation-of-external-software">Automatic Installation of external software</a></li>
+<li><a href="#run">Run</a></li>
+<li><a href="#cleanup">Cleanup</a></li>
+<li><a href="#configuration">Configuration</a></li>
+<li><a href="#mandatory-variables">mandatory variables</a></li>
+<li><a href="#optional">optional</a></li>
+<li><a href="#software-parameter">Software parameter</a>
+<ul>
+<li><a href="#trinity">Trinity</a></li>
+<li><a href="#repeatmasker">RepeatMasker</a></li>
+<li><a href="#cd-hit-est">CD-HIT-EST</a></li>
+<li><a href="#tgicl">TGICL</a></li>
+<li><a href="#misassembled-contigs">misassembled contigs</a></li>
+<li><a href="#blast">BLAST</a></li>
+<li><a href="#sbh-requiremnts">SBH requiremnts</a></li>
+<li><a href="#scaffolding">Scaffolding</a></li>
+<li><a href="#cds-prediction">CDS prediction</a></li>
+</ul></li>
+<li><a href="#output-files">Output files</a></li>
+<li><a href="#important-files">important files</a>
+<ul>
+<li><a href="#functional-annotations-based-on-reference">functional annotations (based on reference)</a></li>
+</ul></li>
+<li><a href="#intermediate-output">intermediate output</a>
+<ul>
+<li><a href="#trinity">trinity/</a></li>
+<li><a href="#transcripts">transcripts/</a></li>
+</ul></li>
+</ul>
+<h1 id="input">Input</h1>
+<p>All you need is a <a href="http://ftp.ncbi.nlm.nih.gov/genomes/">reference transcriptome</a> in GenBank format and RNA-seq data in FastQ format. You can also provide orthologs to your reference transcripts from other species. The additional homologs are used for CDS inference.</p>
+<h1 id="requirements">Requirements</h1>
+<p>FRAMA runs on Linux and is written in Perl (5.10.0), R (3.0.3) and GNU Make (3.81). FRAMA does not require any compilation, but relies on common bioinformatic applications to be installed. The installation of all external software packages might seem like a daunting task, but your package manager might bring you halfway through (see Installation).</p>
+<h2 id="bioinformatic-software">Bioinformatic Software</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Software</th>
+<th>Link</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Trinity</td>
+<td>http://trinityrnaseq.sourceforge.net/</td>
+<td>mandatory</td>
+</tr>
+<tr class="even">
+<td>samtools</td>
+<td>http://samtools.sourceforge.net</td>
+<td>mandatory</td>
+</tr>
+<tr class="odd">
+<td>bamtools</td>
+<td>https://github.com/pezmaster31/bamtools</td>
+<td>mandatory</td>
+</tr>
+<tr class="even">
+<td>bowtie1</td>
+<td>http://bowtie-bio.sourceforge.net/bowtie1</td>
+<td>mandatory</td>
+</tr>
+<tr class="odd">
+<td>bowtie2</td>
+<td>http://bowtie-bio.sourceforge.net/bowtie2</td>
+<td>mandatory</td>
+</tr>
+<tr class="even">
+<td>EMBOSS</td>
+<td>http://emboss.sourceforge.net</td>
+<td>mandatory</td>
+</tr>
+<tr class="odd">
+<td>MAFFT</td>
+<td>http://mafft.cbrc.jp/alignment/software</td>
+<td>mandatory</td>
+</tr>
+<tr class="even">
+<td>GENSCAN</td>
+<td>http://genes.mit.edu/license.html</td>
+<td>mandatory</td>
+</tr>
+<tr class="odd">
+<td>RepeatMasker</td>
+<td>http://www.repeatmasker.org/</td>
+<td>optional</td>
+</tr>
+<tr class="even">
+<td>CD-HIT-EST</td>
+<td>http://weizhong-lab.ucsd.edu/cd-hit/</td>
+<td>optional</td>
+</tr>
+<tr class="odd">
+<td>TGICL</td>
+<td>http://compbio.dfci.harvard.edu/tgi/software/</td>
+<td>optional</td>
+</tr>
+<tr class="even">
+<td>WU-BLAST</td>
+<td>http://blast.advbiocomp.com</td>
+<td>mandatory</td>
+</tr>
+</tbody>
+</table>
+<p>In case you do not use WU-BLAST:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Software</th>
+<th>Link</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>NCBI-BLAST</td>
+<td>http://www.ncbi.nlm.nih.gov/books/NBK279671/</td>
+<td>mandatory</td>
+</tr>
+<tr class="even">
+<td>GenblastA</td>
+<td>http://genome.sfu.ca/genblast/download.html</td>
+<td>mandatory</td>
+</tr>
+</tbody>
+</table>
+<h2 id="perl-modules">Perl Modules</h2>
+<p>Available via CPAN.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Module</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>BioPerl</td>
+<td>1.006924</td>
+</tr>
+<tr class="even">
+<td>Parallel::ForkManager</td>
+<td>0.7.5</td>
+</tr>
+<tr class="odd">
+<td>Set::IntSpan</td>
+<td>1.19</td>
+</tr>
+<tr class="even">
+<td>FileHandle::Unget</td>
+<td>0.1628</td>
+</tr>
+<tr class="odd">
+<td>Text::Soundex</td>
+<td>3.05</td>
+</tr>
+</tbody>
+</table>
+<p>Installation using cpanm:</p>
+<pre><code>cd setup &amp;&amp; cpanm --installdeps .</code></pre>
+<h2 id="r-packages">R Packages</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Package</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>plyr</td>
+<td>1.8.3</td>
+</tr>
+<tr class="even">
+<td>ggplot2</td>
+<td>1.0.1</td>
+</tr>
+<tr class="odd">
+<td>reshape</td>
+<td>0.8.5</td>
+</tr>
+<tr class="even">
+<td>gridExtra</td>
+<td>2.0.0</td>
+</tr>
+<tr class="odd">
+<td>annotate</td>
+<td>1.44</td>
+</tr>
+<tr class="even">
+<td>GO.db</td>
+<td>3.0</td>
+</tr>
+<tr class="odd">
+<td>KEGG.db</td>
+<td>3.0</td>
+</tr>
+</tbody>
+</table>
+<p>Installation using FRAMA:</p>
+<pre><code>cd setup &amp;&amp; Rscript --vanilla SETUP.R</code></pre>
+<h1 id="installation">Installation</h1>
+<p>In addition to FRAMA, you have to install all third-party tools described as 'mandatory' in the table above. Depending on your Linux platform, your package manager might bring you half the way through (see Manual Installation / Automatic Installation).</p>
+<p>Installing FRAMA is quick and easy. Download and unpack this repository and make sure to set the permission to execute FRAMA. You can add FRAMA to your $PATH or create a symlink to FRAMA in one of the directories in $PATH.</p>
+<p>Here is a suggest workflow, which adds <em>FRAMA</em> to your <code>$PATH</code>:</p>
+<pre><code>unzip FRAMA.zip
+cd FRAMA/
+chmod u+x FRAMA
+PATH=$(pwd):$PATH
+export PATH
+# run example
+FRAMA example/testing.cfg</code></pre>
+<h2 id="manual-installation-of-external-software">Manual Installation of external software</h2>
+<p>For instance, on Ubuntu (17.04) :</p>
+<pre><code>sudo apt-get install perl default-jre r-base-core \
+    ncbi-blast+ mafft emboss bowtie bowtie2 cd-hit \
+    bamtools samtools parallel libc6-i386 build-essential \
+    bioperl libparallel-forkmanager-perl libset-intspan-perl \
+    libfilehandle-unget-perl r-cran-ggplot2 r-cran-plyr \
+    r-cran-reshape lib32z1</code></pre>
+<p>Left to install manually:</p>
+<ul>
+<li><code>Trinity, GENSCAN, Genblasta, RepeatMasker, TGICL</code></li>
+<li>R-packages: <code>gridExtra, annotate, GO, KEGG.db</code></li>
+</ul>
+<h2 id="automatic-installation-of-external-software">Automatic Installation of external software</h2>
+<p>On 64bit platforms, <code>FRAMA</code> attempts to download and install (as non-root) missing software packages in very naive way. This might fail due to different/missing library/compiler versions on your system.</p>
+<p>Required prerequesites for automatic installation include at least:</p>
+<p><strong><em>zesty</em></strong> cmake zlib &gt;= 1 (zlib1g-dev) ncurses &gt;= 5 (libncurses5-dev) jre &gt;= 1.7.0 g++-4.9 gcc-4.9 libc6 (libc6-i386) # genscan, tgicl lib32z1 # tgicl</p>
+<p>Start automatic installation:</p>
+<pre><code>cd FRAMA/setup
+perl SETUP.pl</code></pre>
+<p>GENSCAN must be downloaded manually, due to licence restrictions.</p>
+<pre><code>FRAMA_DIR=path/to/FRAMA/setup
+wget http://genes.mit.edu/XXXX
+mkdir genscan &amp;&amp; tar xvf genscanlinux.tar -C genscan
+mv genscan $FRAMA_DIR/sources/.
+ln -f -s $(readlink -f $FRAMA_DIR/sources/genscan/genscan) $FRAMA_DIR/bin/genscan
+ln -f -s $(readlink -f $FRAMA_DIR/sources/genscan/) $FRAMA_DIR/bin/genscan.dir</code></pre>
+<h1 id="run">Run</h1>
+<p>Make sure all mandatory parameters are specified in the configuration file (see Configuration section). Then, call FRAMA with the appropriate configuration file.</p>
+<pre><code>FRAMA configuration_file</code></pre>
+<p>That's all. In case of aborts, consult logfiles and remove incomplete results. Rerunning the above command will complete remaining tasks.</p>
+<p>Same as above, but shows all called processes.</p>
+<pre><code>FRAMA configuration_file verbose</code></pre>
+<p>Start from scratch (removes all created files beforehand).</p>
+<pre><code>FRAMA configuration_file scratch</code></pre>
+<p>FRAMA uses GNU make as a backbone. Parameters other than <code>verbose</code>, <code>scratch</code>, <code>full-cleanup</code>, <code>cleanup</code> are forwarded to make. For example, the following lists all tasks without executing them.</p>
+<pre><code>FRAMA configuration_file -n</code></pre>
+<h1 id="cleanup">Cleanup</h1>
+<p>FRAMA creates a lot of intermediate files. See &quot;output files&quot; for further information about each file. We provide to two cleaning methods:</p>
+<ol style="list-style-type: decimal">
+<li><p>full-cleanup: keeps important files</p>
+<p>FRAMA configuration_file full-cleanup</p></li>
+</ol>
+<p>keeps the following files</p>
+<pre><code>sequences-mRNA.fasta
+sequences-CDS.fasta
+transcript_catalogue.gbk
+summary
+tables/</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li><p>cleanup: keeps intermediate files for each transcript processing and trinity directory</p>
+<p>FRAMA configuration_file cleanup</p></li>
+</ol>
+<p>additionally keeps:</p>
+<pre><code>transcripts/
+trinity/</code></pre>
+<h1 id="configuration">Configuration</h1>
+<p>Take a look at and try to run the provided example file in <code>PATH_TO_FRAMA/example/testing.conf</code> before running FRAMA on your own data set.</p>
+<p>This also serves as a template for your custom configuration.</p>
+<h2 id="mandatory-variables">mandatory variables</h2>
+<p>The following depends mostly on your <code>$PATH</code> variable. Specify path to <strong>directories</strong>(!) of executables for each program that is not in your <code>$PATH</code>. Paths must be separated by <code>space</code>.</p>
+<pre><code>PATH_ALL := /home/user/src/cd-hit/ /home/user/src/EMBOSS/bin/
+PATH_GENSCAN_MAT  := (point to Genscan Matrix to use)
+PATH_BLASTDB := (point to Univector Database)</code></pre>
+<p>Indicate whether WU- or NCBI-BLAST should be used [0 WU, 1 NCBI].</p>
+<pre><code>NCBI_BLAST := 1</code></pre>
+<p>Store intermediate and final files in specified location. Make sure that enough space is available to store intermediate output of trinity, blast results, read alignments, ...).</p>
+<pre><code>OUTPUT_DIR := /data/output</code></pre>
+<p>Input reads in fastq format. In case of paired end data, indicate elements of pair by &quot;R1&quot; and &quot;R2&quot; in filename (Example: <code>sampleA_R1.fq</code>, <code>sampleA_R2.fq</code>). All files must be in the same format (one of fastq, fasta, gzipped).</p>
+<pre><code>READ_DIR := /data/reads/</code></pre>
+<p>Reference transcriptome in GenBank format as provided by NCBI:</p>
+<pre><code>http://ftp.ncbi.nlm.nih.gov/genomes/ -&gt; [YOUR_REF_SPECIES] -&gt; RNA/rna.gbk.gz
+
+REF_TRANSCRIPTOME := /data/human.gb</code></pre>
+<p>Specify <a href="http://www.ncbi.nlm.nih.gov/taxonomy">taxonomy id</a> of species to assemble. FRAMA connects to NCBI (once) to fetch necessary species information.</p>
+<pre><code>SPEC_TAXID := 458603</code></pre>
+<p>We use genome wide annotation packages from <a href="http://www.bioconductor.org/packages/2.14/data/annotation/">Bioconductor</a> to assign functional annotation to the resulting transcript catalogue. Provide (and install) the annotation package corresponding to your reference species.</p>
+<pre><code>OPT_ANNOTATION := org.Hs.eg.db</code></pre>
+<h2 id="optional">optional</h2>
+<p>If you already have extracted mRNA and CDS sequences in FASTA format, provide them to FRAMA. Additionally, you can add a repeat (soft) masked FASTA of your reference sequence in order to skip RepeatMasking step.</p>
+<pre><code>REF_TRANSCRIPTOME_FASTA            := /data/human_mRNA.fa
+REF_TRANSCRIPTOME_FASTA_MASKED     := /data/human_mRNA.fa.masked
+REF_TRANSCRIPTOME_FASTA_CDS        := /data/human_cds.fa
+REF_TRANSCRIPTOME_FASTA_CDS_MASKED := /data/human_cds.fa.masked</code></pre>
+<p>CDS inference is based on the coding sequence of the orthologous reference transcript. You can extend the number of orthologs used to infere the appropriate CDS by providing a table with mappings between orthologous transcript from different species. The first column must contain accession of the reference transcript. Add one column for each species you want to use and use 'NA' to indicate unknown orthologs. Additionally, specify taxonomy ID of each species in the first line (starting with #, tab separated). Keep in mind, that we perform a multiple sequence alignments with all coding sequences. Therefore, the number of species used will have an influence on runtime. Additionally, you must provide a fasta file containing all coding sequences mentioned in table (<code>ORTHOLOG_FASTA</code>).</p>
+<pre><code>ORTHOLOG_TABLE := /data/ortholog_table.csv
+ORTHOLOG_FASTA := /data/ortholog_cds.fa</code></pre>
+<p>Example content <code>ORTHOLOG_TABLE</code> (also, take a look at <code>exampe/ortholog_table.csv</code>)</p>
+<pre><code>#9606   10090   10116   9615
+NM_130786       NM_001081067    NM_022258       NA
+NM_001198819    NM_001081074    NM_133400       XM_534776
+NM_001198818    NM_001081074    NM_133400       XM_534776</code></pre>
+<p>We keep a note in GenBank output about the sequence name and species used to annotated the CDS. If multiple equally valid coding sequencing are found, the first species in <code>SPECIES_ORDER</code> will be used. Please specify the order of columns (0-based) in <code>ORTHOLOG_TABLE</code> to indicate your preferred order of species. Example:</p>
+<pre><code>SPECIES_ORDER := 0,2,1</code></pre>
+<p>Specify the primary processing steps you want to apply to the raw trinity assembly (space separated list) in preferred order. Possible steps are: <code>cd-hit</code> and <code>tgicl</code>. Leave empty to skip primary processing.</p>
+<pre><code>ASSEMBLY_PREPROCESS := cd-hit tgicl</code></pre>
+<p>Soft masks repeats in assembly and reference. Set to 0 if you want to skip repeat masking.</p>
+<pre><code>REPEAT := 1</code></pre>
+<h2 id="software-parameter">Software parameter</h2>
+<p>!Consult manual for external software!</p>
+<p>Number of cpus. This will be used for any software which runs in parallel.</p>
+<pre><code>OPT_CPUS := 2</code></pre>
+<p>If SGE is available (qsub), it will be used for blast jobs. Specify number of jobs.</p>
+<pre><code>OPT_MAX_SGE := 20</code></pre>
+<h3 id="trinity">Trinity</h3>
+<p>Single end (s) or paired end (pe) reads?</p>
+<pre><code>OPT_READTYPE := s</code></pre>
+<p>Consult trinity manual.</p>
+<p>Added automatically: <code>--no_cleanup</code></p>
+<pre><code>OPT_TRINITY   := --JM 10G --seqType fa
+OPT_BUTTERFLY :=</code></pre>
+<h3 id="repeatmasker">RepeatMasker</h3>
+<p>Repeat masking reference/assembly.</p>
+<p>Added automatically: <code>-xsmall -par OPT_CPUS</code></p>
+<pre><code>OPT_REPEAT_REF_TRANSCRIPTOME := -species human -engine ncbi
+OPT_REPEAT_ASSEMBLY          := -species human -engine ncbi</code></pre>
+<h3 id="cd-hit-est">CD-HIT-EST</h3>
+<p>Added automatically: <code>-T OPT_CPUS</code></p>
+<pre><code>OPT_CD_HIT_EST :=</code></pre>
+<h3 id="tgicl">TGICL</h3>
+<p>Added automatically: <code>-c OPT_CPUS</code></p>
+<pre><code>OPT_TGICL :=</code></pre>
+<h3 id="misassembled-contigs">misassembled contigs</h3>
+<p>Used to detect fusion transcript. Specify maximum overlap (<code>-max-overlap</code>) between CDS regions (specifically: blast hits by coding sequences of reference transcriptome), minimum length of alignment (<code>-min-frac-size</code>), identity (<code>min-identity</code>) and coverage (<code>min-coverage</code>) thresholds.</p>
+<pre><code>OPT_FUSION := -max-overlap 5.0 -min-frac-size 200 -min-identity 70.0
+ -min-coverage 90.0</code></pre>
+<h3 id="blast">BLAST</h3>
+<p>BLAST and GENBLASTA Paramater, respectively.</p>
+<p>Added automatically: <code>-wordmask=seg lcmask -topcomboN 3 -cpus 1</code></p>
+<pre><code>OPT_BLAST :=</code></pre>
+<h3 id="sbh-requiremnts">SBH requiremnts</h3>
+<p>Specify minimum required identity and coverage to consider hit as SBH.</p>
+<pre><code>OPT_SBH := -identity=70.0 -coverage=30.0</code></pre>
+<h3 id="scaffolding">Scaffolding</h3>
+<p>Specify minimum required identity and contig coverage of blast hit to consider contig as possible scaffolding fragment.</p>
+<pre><code>OPT_FRAGMENTS   := -identity 70.0 -query-coverage 90.0</code></pre>
+<p>Specify minimum overlap between fragments in alignment to apply filtering rules (example: keeps sequence with higher similarity to reference if fragments differ over 98% in overlap, if overlap exceed 66% of contig length)</p>
+<pre><code>OPT_SCAFFOLDING := -fragment-overlap 66.0 -fragment-identity 98.0</code></pre>
+<h3 id="cds-prediction">CDS prediction</h3>
+<p>Add '-predictions' if you don't want to use predicted coding sequences (XM Accessions) for CDS inference. Don't use if your reference contains &quot;XM&quot; Accessions [TODO].</p>
+<pre><code>OPT_PREDICTCDS := -predictions</code></pre>
+<h1 id="output-files">Output files</h1>
+<h2 id="important-files">important files</h2>
+<table>
+<colgroup>
+<col width="34%" />
+<col width="65%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>transcriptome.gbk *</td>
+<td>GenBank file describing <strong>all annotated sequences</strong>.</td>
+</tr>
+<tr class="even">
+<td>transcriptome_CDS.fa</td>
+<td>Fasta with <strong>coding sequences</strong>.</td>
+</tr>
+<tr class="odd">
+<td>transcriptome_mRNA.fa</td>
+<td>Fasta with <strong>transcript sequences</strong> (w/o introns; clipped ends).</td>
+</tr>
+<tr class="even">
+<td>transcriptome_CDS.csv</td>
+<td>Coordinates of CDS for mRNA sequences.</td>
+</tr>
+<tr class="odd">
+<td>assembly_pripro.fa</td>
+<td>Trinity assembly after primary processing.</td>
+</tr>
+<tr class="even">
+<td>annotation.pdf</td>
+<td>General overview of transcript catalogue</td>
+</tr>
+<tr class="odd">
+<td>annotation.csv</td>
+<td>Table containing summary for each annotated transcript.</td>
+</tr>
+</tbody>
+</table>
+<p>*mRNA feature instead of 'gene' feature to limit mRNA boundaries in case of misassembled contigs</p>
+<h3 id="functional-annotations-based-on-reference">functional annotations (based on reference)</h3>
+<p>Table containing GO Terms associated with each annotated transcript. Also, overview of covered GO Terms and genes in total (genes_per_ontology) and in more detail (genes_per_path).</p>
+<pre><code>tables/gene_ontology.csv
+tables/gene_ontology_genes_per_ontology.csv
+tables/gene_ontology_genes_per_path.csv</code></pre>
+<p>Same as above, but for KEGG Pathways.</p>
+<pre><code>tables/kegg.csv
+tables/kegg_covered.csv
+tables/kegg_genes_per_path.csv</code></pre>
+<h2 id="intermediate-output">intermediate output</h2>
+<h3 id="trinity-1">trinity/</h3>
+<p>Trinity output (including intermediates).</p>
+<h3 id="transcripts">transcripts/</h3>
+<p>Running FRAMA creates a lot intermediate output which might come in handy in downstream analysis. Each transcript assignment is stored in a separate directory in</p>
+<pre><code>transcripts/</code></pre>
+<p>with the naming pattern according to assigned ortholog.</p>
+<pre><code>transcripts/SYMBOL_ACCESSION/</code></pre>
+<p>This directory includes the following files:</p>
+<p>Result in GenBank format.</p>
+<pre><code>_final.gbk</code></pre>
+<p>Raw GENSCAN output.</p>
+<pre><code>CDS_genscan.txt</code></pre>
+<p>Assignment of transcript accession to GENSCAN prediction based on blast hits.</p>
+<pre><code>CDS_genscan_annotated.txt</code></pre>
+<p>Multiple sequence alignment with orth. species requested in <code>ORTHOLOG_TABLE</code></p>
+<pre><code>CDS_alignment.aln</code></pre>
+<p>BLAST databases for reference and assembly.</p>
+<pre><code>db/</code></pre>
+<p>BLAST results including average for each HSP-group (<code>avg_*</code>) and best hit per query (<code>best_*</code>).</p>
+<pre><code>blast/raw_*
+blast/avg_*
+blast/best_*</code></pre>
+</body>
+</html>
