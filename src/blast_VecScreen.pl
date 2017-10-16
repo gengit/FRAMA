@@ -59,7 +59,7 @@ GetOptions(
     'sequences=s' => \$seq_file,
     'database=s'  => \$database,
     'cpu=i'       => \$cpus,
-    'ncbi=i'        => \$ncbi,
+    'ncbi=i'      => \$ncbi,
     'outstem=s'   => \$outstem,
     'help|?'      => \$help,
     'man|m'       => \$man
@@ -78,14 +78,19 @@ unless ($outstem) {
 }
 
 if ($ncbi) {
-    my $command = "blastall -i $seq_file -d UniVec_Core -a 8 -p blastn -q -5 -G 3 -E 3 -F \"m D\" -e 700 -Y 1.75e12 -o $blast_file &> $blast_file.log";
-    system(
-        $command
-    );
+    unless (-e "$database.nin") {
+        my $command = "formatdb -p F -i $database";
+        system($command);
+    }
+    my $command = "blastall -i $seq_file -d $database -a 8 -p blastn -q -5 -G 3 -E 3 -F \"m D\" -e 700 -Y 1.75e12 -o $blast_file";
+    system($command);
 } else {
-    system(
-"blastn $database $seq_file -cpus $cpus -M 1 -N -5 -Q 3 -R 3 -wordmask=dust lcmask -E 700 -Y 1.75e12 -o $blast_file &> $blast_file.log"
-    );
+    unless (-e "$database.xnd") {
+        my $command = "xdformat -n $database";
+        system($command);
+    }
+    my $command = "blastn $database $seq_file -cpus $cpus -M 1 -N -5 -Q 3 -R 3 -wordmask=dust lcmask -E 700 -Y 1.75e12 -o $blast_file &> $blast_file.log";
+    system($command);
 }
 
 my $blast_stream =
@@ -130,6 +135,7 @@ while ( my $result = $blast_stream->next_result() ) {
                         : ( $hsp->score >= 23 ? "weak" : "" ) )
                 );
             } else {
+
             }
 
             if ($match_type) {

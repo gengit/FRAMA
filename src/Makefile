@@ -23,7 +23,7 @@ endif
 ifndef OUTPUT_DIR
 $(error OUTPUT_DIR not defined!)
 endif
- 
+
 # }}}
 # VARIABLES & FUNCTIONS {{{
 # -----------------------------------------------------------------------------
@@ -88,12 +88,10 @@ FILTER   = $(foreach v,$(2),$(if $(findstring $(1),$(v)),$(v),))
 # extend path {{{
 
 # get PATH_ variables
-MYPATHS := $(call FILTER,PATH_,$(.VARIABLES))
-MYPATHS := $(strip $(MYPATHS))
+MYPATHS := $(strip $(PATH_ALL))
 
 # appends values to PATH
-EPATHS := $(foreach v,$(MYPATHS),$(realpath $($(v))))
-EPATHS := $(strip $(EPATHS))
+EPATHS := $(foreach v,$(MYPATHS),$(realpath $(v)))
 EPATHS := $(subst $(space),:,$(EPATHS)):$(PATH)
 export PATH := $(EPATHS)
 
@@ -221,9 +219,17 @@ $(READ_LINKS) : $$(subst $(OUTPUT_DIR)/reads/,$(READ_DIR)/,$$@) | $(OUTPUT_DIR)/
 # PIPELINE {{{
 # -----------------------------------------------------------------------------
 
-all: info check assembly primary-processing blast blast-summary annotation vector \
+all: info assembly primary-processing blast blast-summary annotation vector \
 	fasta-conversion catalog-summary functional
 	@printf "$(P_INFO) Pipeline complete.\n"
+	@printf "\n"
+
+check: $(FILE) | $(LOG_DIR)/.c $(TABLE_DIR)/.c $(TRANS_DIR)/.c \
+	$(TRINITY_DIR)/.c $(BLAST_DIR)/.c $(BBH_DIR)/.c $(ASSEMBLY_DIR)/.c \
+	$(REF_DIR)/.c
+	@printf "$(P_INFO) Checking required software and modules\n"
+	@printf "$(P_LOG)/software_check.log\n"
+	#perl init.pl $< > $(LOG_DIR)/software_check.log
 	@printf "\n"
 
 info: | $(OUTPUT_DIR)/.c
@@ -233,14 +239,6 @@ info: | $(OUTPUT_DIR)/.c
 	@printf "$(P_OUT) $(OUTPUT_DIR) [output directory]\n\n"
 	@printf "#\n# FRAMA Version: $(FRAMA_VERSION)\n#\n" > $(OUTPUT_DIR)/parameters.cfg
 	@cat $(FILE) >> $(OUTPUT_DIR)/parameters.cfg
-
-check: $(FILE) | $(LOG_DIR)/.c $(TABLE_DIR)/.c $(TRANS_DIR)/.c \
-	$(TRINITY_DIR)/.c $(BLAST_DIR)/.c $(BBH_DIR)/.c $(ASSEMBLY_DIR)/.c \
-	$(REF_DIR)/.c 
-	@printf "$(P_INFO) Checking required software and modules\n"
-	@printf "$(P_LOG)/software_check.log\n"
-	perl init.pl $< > $(LOG_DIR)/software_check.log
-	@printf "\n"
 
 assembly: $(RAW_ASSEMBLY).fa
 	@printf "$(P_INFO) Assembly complete.\n"
@@ -341,7 +339,6 @@ endif
 # - JVM decides how many garbage collection threads to use => we limit
 #   GC-threads to one and start half of allowed process in parallel
 
-
 $(TRINITY_DIR)/Trinity.fasta : $(READ_LINKS)
 	@printf "$(P_INFO) Starting Trinity.\n"
 
@@ -357,10 +354,10 @@ endif
 
 ifneq (,$(findstring Trinity.pl,$(COMMAND_TRINITY)))
 	@printf "$(P_LOG)/inchworm.log\n"
-	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_chrysalis $(OPT_TRINITY) &> $(LOG_DIR)/inchworm.log 
+	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_chrysalis $(OPT_TRINITY) &> $(LOG_DIR)/inchworm.log
 
 	@printf "$(P_LOG)/chrysalis.log\n"
-	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_quantifygraph $(OPT_TRINITY) $(OPT_BUTTERFLY) &> $(LOG_DIR)/chrysalis.log 
+	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_quantifygraph $(OPT_TRINITY) $(OPT_BUTTERFLY) &> $(LOG_DIR)/chrysalis.log
 
 	@printf "$(P_LOG)/quanitfyGraph.log\n"
 	ulimit -s unlimited; cat $(dir $@)/chrysalis/quantifyGraph_commands | parallel --max-procs $(OPT_CPUS) --joblog $(LOG_DIR)/quantifyGraph.log
@@ -514,7 +511,7 @@ $(BLAST_DIR)/raw_CDS_ref2trin.csv : $(PRIPRO_ASSEMBLY).masked.fa $(MASKED_REF_CD
 	@printf "$(P_OUT) $@\n\n"
 	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/blast_cds2trin.log
 
-$(BLAST_DIR)/raw_CDS_trin2ref.csv : $(MASKED_REF_CDS) $(PRIPRO_ASSEMBLY).masked.fa | $(BLAST_DIR)/.c 
+$(BLAST_DIR)/raw_CDS_trin2ref.csv : $(MASKED_REF_CDS) $(PRIPRO_ASSEMBLY).masked.fa | $(BLAST_DIR)/.c
 	@printf "$(P_INFO) BLAST\n"
 	@printf "$(P_INFO) query=assembly database=reference\n"
 	@printf "$(P_LOG)/blast_trin2cds.log\n"

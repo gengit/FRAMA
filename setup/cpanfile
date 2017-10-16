@@ -3,3 +3,4 @@ requires 'Set::IntSpan', '1.19';
 requires 'Parallel::ForkManager', '0.7.5';
 requires 'Bio::Root::Version', '1.006924';
 requires 'FileHandle::Unget', '0.1628';
+requires 'YAML', '1.21';

@@ -8,23 +8,22 @@
  compile: |
     mkdir -p build
     cd build
-    cmake ..
-    make
+    cmake .. &> ../FRAMA_install.log
+    make &>> ../FRAMA_install.log
+-
+ description: BlastGenblast
+ remote: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/legacy/2.2.16/blast-2.2.16-x64-linux.tar.gz
+ links: bin/blastall bin/formatdb
+ executable: blastall formatdb
+ extension: tar.gz
+ dir: blast-2.2.16/
 -
  description: Blast
- remote: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.31/ncbi-blast-2.2.31+-src.tar.gz
+ remote: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-x64-linux.tar.gz
  links: bin/blastn bin/makeblastdb bin/blastx
  executable: blastn makeblastdb blastx
  extension: tar.gz
- wget: --ftp-user=anonymous --ftp-password=anonymous
- dir: ncbi-blast-2.2.31+-src/
- compile: |
-   cd c++
-   #./configure --prefix=$(pwd)/.. &> FRAMA_install.log
-   C=/usr/bin/gcc-4.9 CXX=/usr/bin/g++-4.9 ./configure --prefix=$(pwd)/..
-   make &>> FRAMA_install.log
-   make install &>> FRAMA_install.log
-
+ dir: ncbi-blast-2.6.0+/
 -
  description: bowtie1
  remote: http://sourceforge.net/projects/bowtie-bio/files/bowtie/1.1.2/bowtie-1.1.2-linux-x86_64.zip/download
@@ -69,8 +68,8 @@
  remote: http://mafft.cbrc.jp/alignment/software/mafft-7.245-linux.tgz
  extension: tar.gz
  dir: mafft-linux64
- links: mafft.bat
- executable: mafft
+ links: mafft.bat mafftdir
+ executable: mafft mafftdir
 -
  description: parallel
  remote: http://ftp.gnu.org/gnu/parallel/parallel-20150922.tar.bz2
@@ -84,7 +83,7 @@
     make install
 -
  description: repeatmasker
- remote: http://www.repeatmasker.org/RepeatMasker-open-4-0-5.tar.gz
+ remote: http://www.repeatmasker.org/RepeatMasker-open-4-0-7.tar.gz
  extension: tar.gz
  dir: RepeatMasker
  links: RepeatMasker
@@ -113,8 +112,8 @@
  description: tgicl
  remote: ftp://occams.dfci.harvard.edu/pub/bio/tgi/software/tgicl/tgicl_linux.tar.gz
  dir: tgicl_linux
- links: tgicl
- executable: tgicl
+ links: tgicl Mailer.pm bin bin/cdbyank
+ executable: tgicl Mailer.pm bin cdbyank
  extension: tar.gz
  wget: --ftp-user anonymous --ftp-password anonymous
 -
@@ -137,16 +136,17 @@
  executable: trf
 -
  description: trinity
- remote: https://github.com/trinityrnaseq/trinityrnaseq/archive/v2.0.6.tar.gz
+ remote: https://github.com/trinityrnaseq/trinityrnaseq/archive/Trinity-v2.4.0.tar.gz
  links: Trinity
  executable: Trinity
- dir: trinityrnaseq-2.0.6
+ dir: trinityrnaseq-Trinity-v2.4.0
  compile: |
     make
  extension: tar.gz
 -
  description: UNIVEC
  remote: ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec_Core
+ links: UNIVEC
  executable: UniVec_Core
  wget: --ftp-user anonymous --ftp-password anonymous
 
