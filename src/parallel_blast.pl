@@ -134,8 +134,9 @@ unless ( -e $opt{db} ) {
     die "Couldn't find database: $opt{db}\n";
 } else {
     if ($opt{flavor} eq "wu") {
-        system( $opt{path}->{bin} . "xdformat -n $opt{db} &> /dev/null") if ($opt{type} =~ /n$/);
-        system( $opt{path}->{bin} . "xdformat -p $opt{db} &> /dev/null") if ($opt{type} =~ /[px]$/);
+        my $command = $opt{path}->{bin} . "xdformat -n $opt{db} &> /dev/null" if ($opt{type} =~ /n$/);
+        $command = $opt{path}->{bin} . "xdformat -p $opt{db} &> /dev/null" if ($opt{type} =~ /[px]$/);
+        system($command);
     } elsif ($opt{flavor} eq "ncbi") {
         system( $opt{path}->{bin} . "makeblastdb -dbtype nucl -in $opt{db} &> /dev/null") if ($opt{type} =~ /n$/);
         system( $opt{path}->{bin} . "makeblastdb -dbtype prot -in $opt{db} &> /dev/null") if ($opt{type} =~ /[px]$/);

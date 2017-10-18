@@ -660,13 +660,12 @@ sub alignBowtie {
     } else {
 
         $failed = system("samtools view -bS $sam > $sam.unsorted.bam 2> /dev/null") unless ($failed);
-        $failed = system("samtools sort $sam.unsorted.bam $args->{output}") unless ($failed);
-        $failed = system("samtools index $args->{output}.bam") unless ($failed); 
+        $failed = system("samtools sort $sam.unsorted.bam > $args->{output}.bam") unless ($failed);
+        $failed = system("samtools index $args->{output}.bam") unless ($failed);
         if ($failed) {
             print STDERR "Failed to convert SAM to BAM.\n";
             return $failed;
         }
-
     }
 
     return $failed;

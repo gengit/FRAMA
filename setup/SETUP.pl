@@ -42,7 +42,7 @@ sub checkProgram {
     my $installed = 0;
     if (@programs) {
         for my $e (@programs) {
-            my $command = "which $e";
+            my $command = "which $e 2> /dev/null";
             my ($output) = `$command`;
             if (defined $output) {
                 chomp $output;

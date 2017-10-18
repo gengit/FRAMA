@@ -49,13 +49,13 @@
    make
 -
  description: EMBOSS
- remote: http://science-annex.org/pub/emboss/EMBOSS-6.6.0.tar.gz
+ remote: ftp://emboss.open-bio.org/pub/EMBOSS/EMBOSS-6.6.0.tar.gz
  extension: tar.gz
  dir: EMBOSS-6.6.0
  links: emboss/needle emboss/getorf
  executable: needle getorf
  compile: |
-    ./configure --without-x && make
+    ./configure --prefix $(pwd) --without-x && make && make install
 -
  description: genblasta
  remote: http://genome.sfu.ca/genblast/latest/genblasta_v1.0.4_linux_x86_64
@@ -101,13 +101,13 @@
  wget: --ftp-user anonymous --ftp-password anonymous
 -
  description: samtools
- remote: http://sourceforge.net/projects/samtools/files/samtools/1.2/samtools-1.2.tar.bz2/download
+ remote: https://sourceforge.net/projects/samtools/files/samtools/1.6/samtools-1.6.tar.bz2/download
  extension: tar.bz2
- dir: samtools-1.2
+ dir: samtools-1.6
  links: samtools
  executable: samtools
  compile: |
-    make prefix=$(pwd)
+    ./configure --prefix=$(pwd) --disable-bz2 && make && make install
 -
  description: tgicl
  remote: ftp://occams.dfci.harvard.edu/pub/bio/tgi/software/tgicl/tgicl_linux.tar.gz

@@ -1,7 +1,7 @@
 #       AUTHOR: Martin Bens, bensmartin@gmail.com
 # ORGANIZATION: FLI Jena
 
-FRAMA_VERSION := 20160522
+FRAMA_VERSION := 20171018
 
 SHELL := /bin/bash
 
@@ -10,7 +10,7 @@ SHELL := /bin/bash
 .DELETE_ON_ERROR:
 
 .PHONY: all check assembly primary-processing blast blast-summary annotation \
-	vector fasta-conversion catalog-summary functional
+	vector fasta-conversion catalog-summary functional info
 
 # IMPORT PARAMETERS {{{
 
@@ -149,7 +149,7 @@ OPT_BLAST        := $(shell perl parameter_blast.pl "$(OPT_GENBLAST)" "$(OPT_BLA
 BLAST_PARAMETER  += -path bin=$(dir $(shell export PATH="$(EPATHS)" && command -v genblasta))/ -flavor genblasta -parameter '$(OPT_BLAST)'
 else
 OPT_BLAST        += -wordmask=seg lcmask -topcomboN 3 -cpus 1
-BLAST_PARAMETER  += -path bin=$(dir $(shell export PATH="$(EPATHS)" && command -v blastn))/ -flavor wu -parameter '$(OPT_BLAST)'
+BLAST_PARAMETER  += -path bin=$(dir $(shell export PATH="$(EPATHS)" && command -v xdformat))/ -flavor wu -parameter '$(OPT_BLAST)'
 endif
 # }}}
 # default: annotation.pl {{{
@@ -224,17 +224,18 @@ all: info assembly primary-processing blast blast-summary annotation vector \
 	@printf "$(P_INFO) Pipeline complete.\n"
 	@printf "\n"
 
-check: $(FILE) | $(LOG_DIR)/.c $(TABLE_DIR)/.c $(TRANS_DIR)/.c \
+check: ../setup/programs.yaml $(FILE) |  $(LOG_DIR)/.c $(TABLE_DIR)/.c $(TRANS_DIR)/.c \
 	$(TRINITY_DIR)/.c $(BLAST_DIR)/.c $(BBH_DIR)/.c $(ASSEMBLY_DIR)/.c \
 	$(REF_DIR)/.c
-	@printf "$(P_INFO) Checking required software and modules\n"
-	@printf "$(P_LOG)/software_check.log\n"
-	#perl init.pl $< > $(LOG_DIR)/software_check.log
+	@printf "$(P_INFO) Checking required software and modules (consult log file in case of errors)\n"
+	@printf "$(P_LOG)/software_check.log\n\n"
+	perl init.pl $< > $(LOG_DIR)/software_check.log
+	@printf "$(P_INFO) Creating directories\n"
 	@printf "\n"
 
 info: | $(OUTPUT_DIR)/.c
 	@printf "\n"
-	@printf "$(P_INFO) Starting FRAMA...\n"
+	@printf "$(P_INFO) Starting FRAMA (v$(FRAMA_VERSION))\n"
 	@printf "$(P_OUT) $(OUTPUT_DIR)/parameters.cfg [parameter file]\n"
 	@printf "$(P_OUT) $(OUTPUT_DIR) [output directory]\n\n"
 	@printf "#\n# FRAMA Version: $(FRAMA_VERSION)\n#\n" > $(OUTPUT_DIR)/parameters.cfg

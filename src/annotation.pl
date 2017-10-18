@@ -713,8 +713,11 @@ sub getReadFiles {
 
     my %components;
     for my $frag_id (@ids) {
-        if ( $frag_id =~ /^(.+?)[\._]/ ) {
 
+        #if ( $frag_id =~ /^(.+?)[\._]/ ) {
+        if ($frag_id =~ /^TRINITY_DN(\d+)_.+?/) {
+            $components{"c$1"} = 1;
+        } elsif ( $frag_id =~ /^(.+?)[\._]/ ) {
             # Example: c121735.graph_c0_seq1
             $components{$1} = 1;
         } elsif ( defined $tgicl && $frag_id =~ /^CL(\d+)Contig(\d+)/ ) {
