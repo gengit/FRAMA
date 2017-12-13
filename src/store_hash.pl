@@ -9,10 +9,10 @@ Martin Bens, bensmartin@gmail.com
 2014-07-24
 
 =head1 DESCRIPTION
-Stores table as storable object, which can be retrieved later. 
+Stores table as storable object, which can be retrieved later.
 
 2 Variants:
-Specify -c1 and -c2 => -c1 = key; -c2 = value; [one2many, array reference as value] 
+Specify -c1 and -c2 => -c1 = key; -c2 = value; [one2many, array reference as value]
 Specify -c1 only => -c1 = key, complete line = value [one2many, array reference as value]
 
 =head1 OPTIONS
@@ -22,19 +22,19 @@ Specify -c1 only => -c1 = key, complete line = value [one2many, array reference 
 
 Input table
 
-=item B<-output> 
+=item B<-output>
 
 Output file (default: input.storable)
 
-=item B<-column1|c1> 
+=item B<-column1|c1>
 
-column which contains key 
+column which contains key
 
-=item B<-column2|c2> 
+=item B<-column2|c2>
 
 (optional) column which contains value
 
-=item B<-noarray> 
+=item B<-noarray>
 
 one2one
 

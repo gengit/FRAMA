@@ -11,7 +11,7 @@ Martin Bens, bensmartin@gmail.com
 
 Extracts line with first occurence of a value in a specified column. This can
 therefore be used to extract best hits, for instance for BLAT and Blast, which
-should previously be sorted by your favoured best hit criteria.  
+should previously be sorted by your favoured best hit criteria.
 
 =head1 OPTIONS
 

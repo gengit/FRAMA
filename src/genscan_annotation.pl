@@ -12,7 +12,7 @@ Martin Bens, bensmartin@gmail.com
 
 =head1 DESCRIPTION
 
-Annotated GENSCAN predictions. 
+Annotated GENSCAN predictions.
 
 Hits file must contain:
     QUERY_ID, STRAND, START_IN_TARGET, STOP_IN_TARGET, IDENTITY, COVERED_QUERY, QUERY_SYMBOL
@@ -28,7 +28,7 @@ Additionally, use known CDS regions to annotated result in the follow format
 
 Genscan result as produced by GENSCAN.
 
-=item B<-hits> 
+=item B<-hits>
 
 QueryID, Strand, StartInTarget, EndInTarget, Identity, CoveredQuery, Symbol.
 
@@ -36,21 +36,18 @@ QueryID, Strand, StartInTarget, EndInTarget, Identity, CoveredQuery, Symbol.
 
 Already known coding regions (start, end, strand, symbol, accession).
 
-=item B<-rev> 
+=item B<-rev>
 
 Specify length of contig if blast was performed on reverse complemented
-sequence. 
+sequence.
 
-=item B<-head/nohead> 
+=item B<-head/nohead>
 
 Header line.
 
 =back
 
 =cut
-
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 
 use Getopt::Long;
 use Pod::Usage;

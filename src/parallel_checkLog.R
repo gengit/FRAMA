@@ -1,4 +1,4 @@
-# checks GNU Parallel logs 
+# checks GNU Parallel logs
 
 args = commandArgs(trailingOnly = T)
 log = read.table(args[1], header = T, sep = "\t")

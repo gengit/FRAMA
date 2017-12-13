@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -16,17 +16,17 @@ every single sequence is stored in output.index (1based coordinates).
 
 =over 8
 
-=item B<-file> 
+=item B<-file>
 
 Multi-Fasta file.
 
-=item B<-output> 
+=item B<-output>
 
-Output stem for output files (index and fa). [default: output] 
+Output stem for output files (index and fa). [default: output]
 
-=item B<-space> 
+=item B<-space>
 
-Separate sequences by sequence of characters. 
+Separate sequences by sequence of characters.
 
 =back
 
@@ -34,9 +34,6 @@ Separate sequences by sequence of characters.
 
 use strict;
 use warnings;
-
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 
 use Getopt::Long;
 use Data::Dumper;

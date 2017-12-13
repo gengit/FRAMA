@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -9,7 +9,7 @@ Martin Bens, bensmartin@gmail.com
 
 =head1 DESCRIPTION
 
-Adds misc_feature for regions which might originate from vector sequences. 
+Adds misc_feature for regions which might originate from vector sequences.
 
 =head1 OPTIONS
 
@@ -33,9 +33,6 @@ CSV as produced by vecscreen.pl
 
 use strict;
 use warnings;
-
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 
 use Getopt::Long;
 use File::Basename;

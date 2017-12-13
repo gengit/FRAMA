@@ -62,9 +62,6 @@ Directory of executable (blastn, blastall, megablast, ...)
 
 =cut
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
-
 use File::Basename;
 use File::Path qw(make_path remove_tree);
 use Getopt::Long;

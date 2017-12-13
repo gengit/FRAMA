@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -37,8 +37,12 @@ use File::Basename;
 use Data::Dumper;
 use Pod::Usage;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
+use Cwd qw(realpath);
+BEGIN {
+    my ($mypath) = realpath($0)=~m/(^.*)\//;
+    push @INC, "$mypath/../lib/perl";
+}
+
 use GenbankHelper;
 
 pod2usage(-message => "\n\tNo arguments\n", -verbose => 1) if (@ARGV == 0);

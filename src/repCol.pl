@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -13,12 +13,12 @@ Replaces content of column in Table1 by assignments in Table2.
 
 Example:
 
-    Table1       Table2      Result   
+    Table1       Table2      Result
     | A | 1 |    | A | Z |   | Z | 1 |
     | B | 2 |    | B | Y |   | Y | 2 |
     | B | 3 |    | C | X |   | Y | 3 |
     | C | 4 |                | X | 4 |
-    
+
 =head1 OPTIONS
 
 =over 8
@@ -47,7 +47,7 @@ Select column in table2 with replacements by number (1-based).
 
 Adds column to table1 instead of replacing values.
 
-=item B<-NA> 
+=item B<-NA>
 
 Use "NA" if no replacement was found (otherwise keeps value).
 

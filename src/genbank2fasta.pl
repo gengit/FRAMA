@@ -8,8 +8,11 @@
 use strict;
 use warnings;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
+use Cwd qw(realpath);
+BEGIN {
+    my ($mypath) = realpath($0)=~m/(^.*)\//;
+    push @INC, "$mypath/../lib/perl";
+}
 
 use Getopt::Long;
 use Data::Dumper;
@@ -125,7 +128,7 @@ if ($i_name eq "acc") {
 
 while (my $seqobj = $io->next_seq) {
     my $seqid = $seqobj->accession;
-    $seqid = $seqobj->id if ($seqid eq "unknown"); 
+    $seqid = $seqobj->id if ($seqid eq "unknown");
     my $outseq;
 
     if ($molecule) {
@@ -233,17 +236,17 @@ while (my $seqobj = $io->next_seq) {
 __END__
 
 =head1 DESCRIPTION
-    
+
 Converts genbank file to fasta format.
 
 =head1 SYNOPSIS
 
 Convert genbank to fasta.
-        
+
     genbank2fasta.pl -i input.gbk -o output.fa
 
 Convert genbank to fasta, but use symbol as header.
-        
+
     genbank2fasta.pl -i input.gbk -o output.fa -o-name symbol
 
 Extract CDS sequence and write to fasta file.
@@ -252,7 +255,7 @@ Extract CDS sequence and write to fasta file.
 
 Extract only sequences with CDS annotated and write to fasta file.
 
-    genbank2fasta.pl -i input.gbk -o output.fa -format fasta -feature CDS 
+    genbank2fasta.pl -i input.gbk -o output.fa -format fasta -feature CDS
 
 Extract only sequence if miRBase-ID.
 
@@ -264,7 +267,7 @@ Extract only sequence if miRBase-ID.
 =over 8
 
 =item B<-input|-i> input.gbk
-    
+
 Genbank file.
 
 =item B<-output|-o> output.fa
@@ -292,13 +295,13 @@ ID type of input IDs (see -o-name).
 
 Entry must include specified feature in order to be converted to fasta.
 
-=item B<-feature-sequence|-fs> 
+=item B<-feature-sequence|-fs>
 
 Truncate sequence by feature coordinates (see -feature). Useful to extract CDS
 region for instance.
 
 =item B<-ids> file.txt
-    
+
 IDs to extract from input file. One ID per line (see -i-name).
 
 =item B<-id> A2M

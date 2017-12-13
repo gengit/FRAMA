@@ -29,9 +29,6 @@ Table with SequenceID, Start and end.
 
 =cut
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
-
 use Pod::Usage;
 use Getopt::Long;
 pod2usage(-message => "\n\tNo arguments\n", -verbose => 1) if (@ARGV == 0);

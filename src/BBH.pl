@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -13,15 +13,15 @@ Martin Bens, bensmartin@gmail.com
 
 =over 8
 
-=item B<-a> 
+=item B<-a>
 
 file 1
 
-=item B<-b> 
+=item B<-b>
 
 file 2
 
-=item B<-out> 
+=item B<-out>
 
 output
 

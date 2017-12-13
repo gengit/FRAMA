@@ -1,16 +1,15 @@
 #       AUTHOR: Martin Bens, bensmartin@gmail.com
 # ORGANIZATION: FLI Jena
 
-FRAMA_VERSION := 20171018
-
-SHELL := /bin/bash
+FRAMA_VERSION := 20171213
 
 .SECONDEXPANSION:
 
 .DELETE_ON_ERROR:
 
 .PHONY: all check assembly primary-processing blast blast-summary annotation \
-	vector fasta-conversion catalog-summary functional info
+	vector fasta-conversion catalog-summary functional info archive-all archive-blast \
+	archive-trinity archive-assembly
 
 # IMPORT PARAMETERS {{{
 
@@ -228,8 +227,8 @@ check: ../setup/programs.yaml $(FILE) |  $(LOG_DIR)/.c $(TABLE_DIR)/.c $(TRANS_D
 	$(TRINITY_DIR)/.c $(BLAST_DIR)/.c $(BBH_DIR)/.c $(ASSEMBLY_DIR)/.c \
 	$(REF_DIR)/.c
 	@printf "$(P_INFO) Checking required software and modules (consult log file in case of errors)\n"
-	@printf "$(P_LOG)/software_check.log\n\n"
-	perl init.pl $< > $(LOG_DIR)/software_check.log
+	@printf "$(P_LOG)/000_software_check.log\n\n"
+	perl init.pl $< > $(LOG_DIR)/000_software_check.log
 	@printf "$(P_INFO) Creating directories\n"
 	@printf "\n"
 
@@ -294,7 +293,7 @@ ifeq ($(REPEAT),0)
 	ln -f -s $< $@
 else
 	@printf "$(P_LOG)/rm_assembly.log\n\n"
-	cd $(ASSEMBLY_DIR) && RepeatMasker $< $(OPT_REPEAT_ASSEMBLY) &> $(LOG_DIR)/rm_assembly.log
+	cd $(ASSEMBLY_DIR) && RepeatMasker $< $(OPT_REPEAT_ASSEMBLY) &> $(LOG_DIR)/011_rm_assembly.log
 endif
 
 # Repeat mask reference
@@ -306,7 +305,7 @@ else ifeq ($(REPEAT),0)
 	ln -f -s $< $@
 else
 	@printf "$(P_LOG)/repeat_masking_reference.log\n\n"
-	cd $(REF_DIR) && RepeatMasker $< $(OPT_REPEAT_REF_TRANSCRIPTOME) &> $(LOG_DIR)/repeat_masking_reference.log
+	cd $(REF_DIR) && RepeatMasker $< $(OPT_REPEAT_REF_TRANSCRIPTOME) &> $(LOG_DIR)/012_rm_reference.log
 endif
 
 # Repeat mask reference CDS
@@ -355,24 +354,24 @@ endif
 
 ifneq (,$(findstring Trinity.pl,$(COMMAND_TRINITY)))
 	@printf "$(P_LOG)/inchworm.log\n"
-	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_chrysalis $(OPT_TRINITY) &> $(LOG_DIR)/inchworm.log
+	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_chrysalis $(OPT_TRINITY) &> $(LOG_DIR)/021_inchworm.log
 
 	@printf "$(P_LOG)/chrysalis.log\n"
-	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_quantifygraph $(OPT_TRINITY) $(OPT_BUTTERFLY) &> $(LOG_DIR)/chrysalis.log
+	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) --no_run_quantifygraph $(OPT_TRINITY) $(OPT_BUTTERFLY) &> $(LOG_DIR)/022_chrysalis.log
 
 	@printf "$(P_LOG)/quanitfyGraph.log\n"
-	ulimit -s unlimited; cat $(dir $@)/chrysalis/quantifyGraph_commands | parallel --max-procs $(OPT_CPUS) --joblog $(LOG_DIR)/quantifyGraph.log
+	ulimit -s unlimited; cat $(dir $@)/chrysalis/quantifyGraph_commands | parallel --max-procs $(OPT_CPUS) --joblog $(LOG_DIR)/023_quantifyGraph.log
 
-	Rscript parallel_checkLog.R $(LOG_DIR)/quantifyGraph.log
+	Rscript parallel_checkLog.R $(LOG_DIR)/024_quantifyGraph.log
 
 	@printf "$(P_LOG)/butterfly.log\n"
-	ulimit -s unlimited; cat $(dir $@)/chrysalis/butterfly_commands | parallel --max-procs $(shell echo '$(OPT_CPUS)/2' | bc) --joblog $(LOG_DIR)/butterfly.log
+	ulimit -s unlimited; cat $(dir $@)/chrysalis/butterfly_commands | parallel --max-procs $(shell echo '$(OPT_CPUS)/2' | bc) --joblog $(LOG_DIR)/025_butterfly.log
 
 	Rscript parallel_checkLog.R $(LOG_DIR)/butterfly.log
 	ulimit -s unlimited; find $(dir $@)/chrysalis -name "*allProbPaths.fasta" -exec cat {} + > $@
 else
 	@printf "$(P_LOG)/Trinity.log\n\n"
-	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) $(OPT_TRINITY) > $(LOG_DIR)/Trinity.log
+	ulimit -s unlimited; $(COMMAND_TRINITY) $(options) $(OPT_TRINITY) > $(LOG_DIR)/020_Trinity.log
 endif
 
 $(RAW_ASSEMBLY).fa : $(TRINITY_DIR)/Trinity.fasta | $(ASSEMBLY_DIR)/.c
@@ -414,7 +413,7 @@ $(CDHIT_ASSEMBLY).fa : $(ASSEMBLY_DIR)/complete.tmp | $(LOG_DIR)/.c $(dir $(CDHI
 	@printf "\n"
 	@printf "$(P_INFO) Clustering sequences: CDHIT-EST\n"
 	@printf "$(P_LOG)/cdhit.log\n\n"
-	$(COMMAND_CDHIT) -i $(TMP_ASSEMBLY).fa -o $@ $(OPT_CD_HIT_EST) > $(LOG_DIR)/cdhit.log
+	$(COMMAND_CDHIT) -i $(TMP_ASSEMBLY).fa -o $@ $(OPT_CD_HIT_EST) > $(LOG_DIR)/030_cdhit.log
 
 # }}}
 # TGICL {{{
@@ -427,11 +426,11 @@ $(ASSEMBLY_DIR)/complete.tgicl : $(TGICL_ASSEMBLY).fa
 $(TGICL_ASSEMBLY).fa : | $(TMP_ASSEMBLY).fa $(dir $(TGICL_ASSEMBLY))/.c
 	@printf "\n";
 	@printf "$(P_INFO) Meta assembly: TGICL\n"
-	@printf "$(P_LOG)/tgicl.log\n"
+	@printf "$(P_LOG)/040_tgicl.log\n"
 
 	$(eval TMPFILE := $(ASSEMBLY_DIR)/tgicl/Trinity.tmp.fa)
 	cp $(TMP_ASSEMBLY).fa $(ASSEMBLY_DIR)/tgicl/tmp
-	cd $(ASSEMBLY_DIR)/tgicl; tgicl tmp &> $(LOG_DIR)/tgicl.log
+	cd $(ASSEMBLY_DIR)/tgicl; tgicl tmp &> $(LOG_DIR)/040_tgicl.log
 	#$(OPT_TGICL);
 	bash tgicl.sh $(ASSEMBLY_DIR)/tgicl/tmp $@
 
@@ -493,59 +492,60 @@ $(TMP_DIR)/fusion_full_report_sym.csv : $(TMP_DIR)/fusion_full_report.csv $(TABL
 $(BLAST_DIR)/raw_mRNA_ref2trin.csv : $(PRIPRO_ASSEMBLY).masked.fa $(MASKED_REF) | $(BLAST_DIR)/.c
 	@printf "$(P_INFO) BLAST\n"
 	@printf "$(P_INFO) query=reference database=assembly\n"
-	@printf "$(P_LOG)/blast_mRNA2trin.log\n"
+	@printf "$(P_LOG)/051_blast_mRNA2trin.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null
+	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/051_blast_mRNA2trin.log
+
 
 $(BLAST_DIR)/raw_mRNA_trin2ref.csv : $(MASKED_REF) $(PRIPRO_ASSEMBLY).masked.fa | $(BLAST_DIR)/.c
 	@printf "$(P_INFO) BLAST\n"
 	@printf "$(P_INFO) query=assembly database=reference\n"
-	@printf "$(P_LOG)/blast_trin2mRNA.log\n"
+	@printf "$(P_LOG)/052_blast_trin2mRNA.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/blast_trin2mRNA.log
+	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/052_blast_trin2mRNA.log
 
 # BLAST CDS
 $(BLAST_DIR)/raw_CDS_ref2trin.csv : $(PRIPRO_ASSEMBLY).masked.fa $(MASKED_REF_CDS) | $(BLAST_DIR)/.c
 	@printf "$(P_INFO) BLAST\n"
 	@printf "$(P_INFO) query=reference database=assembly\n"
-	@printf "$(P_LOG)/blast_cds2trin.log\n"
+	@printf "$(P_LOG)/053_blast_cds2trin.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/blast_cds2trin.log
+	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/053_blast_cds2trin.log
 
 $(BLAST_DIR)/raw_CDS_trin2ref.csv : $(MASKED_REF_CDS) $(PRIPRO_ASSEMBLY).masked.fa | $(BLAST_DIR)/.c
 	@printf "$(P_INFO) BLAST\n"
 	@printf "$(P_INFO) query=assembly database=reference\n"
-	@printf "$(P_LOG)/blast_trin2cds.log\n"
+	@printf "$(P_LOG)/054_blast_trin2cds.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/blast_cds2trin.log
+	perl parallel_blast.pl -q $(word 2,$^) -db $< -o $@ $(BLAST_PARAMETER) > /dev/null 2> $(LOG_DIR)/054_blast_trin2cds.log
 
 
 
 # BLAST mRNA
 $(BLAST_DIR)/avg_mRNA_ref2trin.csv :$(BLAST_DIR)/raw_mRNA_ref2trin.csv $(PRIPRO_ASSEMBLY).masked.fa.fai $(REF_DIR)/ref_transcriptome.fa.fai
 	@printf "$(P_INFO) query=reference database=assembly\n"
-	@printf "$(P_LOG)/blast_$(notdir $@).log\n"
+	@printf "$(P_LOG)/055_blast_avg_mRNA2trin.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	$(COMMAND_SUM_BLAST) -input $< -lq $(word 3,$^) -lt $(word 2,$^) > $@ 2> $(LOG_DIR)/blast_$(notdir $@).log
+	$(COMMAND_SUM_BLAST) -input $< -lq $(word 3,$^) -lt $(word 2,$^) > $@ 2> $(LOG_DIR)/055_blast_avg_mRNA2trin.log
 
 $(BLAST_DIR)/avg_mRNA_trin2ref.csv : $(BLAST_DIR)/raw_mRNA_trin2ref.csv $(REF_DIR)/ref_transcriptome.fa.fai $(PRIPRO_ASSEMBLY).masked.fa.fai
 	@printf "$(P_INFO) query=assembly database=reference\n"
-	@printf "$(P_LOG)/blast_$(notdir $@).log\n"
+	@printf "$(P_LOG)/056_blast_avg_trin2mRNA.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	$(COMMAND_SUM_BLAST) -input $< -lq $(word 3,$^) -lt $(word 2,$^) > $@ 2> $(LOG_DIR)/blast_$(notdir $@).log
+	$(COMMAND_SUM_BLAST) -input $< -lq $(word 3,$^) -lt $(word 2,$^) > $@ 2> $(LOG_DIR)/056_blast_avg_trin2mRNA.log
 
 # BLAST CDS
 $(BLAST_DIR)/avg_CDS_ref2trin.csv : $(BLAST_DIR)/raw_CDS_ref2trin.csv $(PRIPRO_ASSEMBLY).masked.fa.fai $(REF_DIR)/ref_transcriptome_cds.fa.fai
 	@printf "$(P_INFO) query=reference database=assembly\n"
-	@printf "$(P_LOG)/blast_$(notdir $@).log\n"
+	@printf "$(P_LOG)/blast_avg_cds2trin.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	$(COMMAND_SUM_BLAST) -input $< -lq $(word 3,$^) -lt $(word 2,$^) > $@ 2> $(LOG_DIR)/blast_$(notdir $@).log
+	$(COMMAND_SUM_BLAST) -input $< -lq $(word 3,$^) -lt $(word 2,$^) > $@ 2> $(LOG_DIR)/057_blast_avg_cds2trin.log
 
 $(BLAST_DIR)/avg_CDS_trin2ref.csv : $(BLAST_DIR)/raw_CDS_trin2ref.csv $(REF_DIR)/ref_transcriptome_cds.fa.fai $(PRIPRO_ASSEMBLY).masked.fa.fai
 	@printf "$(P_INFO) query=assembly  database=reference\n"
-	@printf "$(P_LOG)/blast_$(notdir $@).log\n"
+	@printf "$(P_LOG)/058_blast_avg_trin2cds.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	$(COMMAND_SUM_BLAST) -input $< -lq $(word 3,$^) -lt $(word 2,$^) > $@ 2> $(LOG_DIR)/blast_$(notdir $@).log
+	$(COMMAND_SUM_BLAST) -input $< -lq $(word 3,$^) -lt $(word 2,$^) > $@ 2> $(LOG_DIR)/058_blast_avg_trin2cds.log
 
 # BEST
 $(BLAST_DIR)/sorted_%.csv : $$(subst sorted,avg,$$@)
@@ -593,8 +593,8 @@ $(ASSEMBLY_DIR)/annotated.gbk : $(PRIPRO_ASSEMBLY).fa $(REF_TRANSCRIPTOME) \
 	$(BLAST_DIR)/avg_CDS_ref2trin_sym.csv \
 	$(BLAST_DIR)/scaffolding_candidates_trin2ref.csv $(PATH_GENSCAN_MAT)
 	@printf "\n$(P_INFO) Annotation\n"
-	@printf "$(P_LOG)/annotation.log\n"
-	@printf "$(P_LOG)/annotation.err\n\n"
+	@printf "$(P_LOG)/061_annotation.log\n"
+	@printf "$(P_LOG)/062_annotation.err\n\n"
 	perl annotation.pl \
 		-new  \
 		-taxon-assemble $(SPECIES_ASS_ID) \
@@ -608,8 +608,8 @@ $(ASSEMBLY_DIR)/annotated.gbk : $(PRIPRO_ASSEMBLY).fa $(REF_TRANSCRIPTOME) \
 		-scaffolding $(BLAST_DIR)/scaffolding_candidates_trin2ref.csv \
 		-blast 		 $(BLAST_DIR)/avg_CDS_ref2trin_sym.csv \
 		$(ANNOTATION_PARAMETER) \
-			> $(LOG_DIR)/annotation.log \
-			2> $(LOG_DIR)/annotation.err
+			> $(LOG_DIR)/061_annotation.log \
+			2> $(LOG_DIR)/062_annotation.err
 
 # index path to read files
 $(TRINITY_DIR)/dir2comp.csv : $(TRINITY_DIR)/Trinity.fasta
@@ -650,9 +650,9 @@ $(FINAL_MRNA).fa : $(ASSEMBLY_DIR)/annotated.gbk
 
 $(FINAL_SUMMARY).pdf : $(FINAL_SUMMARY).csv $(TABLE_DIR)/reference.csv $(PRIPRO_ASSEMBLY).fa.fai | $(TABLE_DIR)/.c
 	@printf "$(P_INFO) Summarize results.\n"
-	@printf "$(P_LOG)/summary.log\n"
+	@printf "$(P_LOG)/070_summary.log\n"
 	@printf "$(P_OUT) $@\n\n"
-	Rscript $(OPT_R) summarize.R $< $(TABLE_DIR)/reference.csv $(PRIPRO_ASSEMBLY).fa.fai $(TABLE_DIR) $@ &> $(LOG_DIR)/summary.log
+	Rscript $(OPT_R) summarize.R $< $(TABLE_DIR)/reference.csv $(PRIPRO_ASSEMBLY).fa.fai $(TABLE_DIR) $@ &> $(LOG_DIR)/070_summary.log
 
 $(FINAL_SUMMARY).csv : $(FINAL_GENBANK).gbk | $(TABLE_DIR)/.c
 	@printf "$(P_INFO) Create summary table.\n"
@@ -673,13 +673,38 @@ $(FINAL_CDS).csv : $(FINAL_GENBANK).gbk | $(TABLE_DIR)/.c
 
 $(FINAL_GO).pdf : $(FINAL_SUMMARY).csv
 	@printf "$(P_INFO) GO annotation.\n"
-	@printf "$(P_LOG)/GO.log\n\n"
-	Rscript $(OPT_R) GO.R $< $(OPT_ANNOTATION) $(TABLE_DIR) $@ &> $(LOG_DIR)/GO.log
+	@printf "$(P_LOG)/080_GO.log\n\n"
+	Rscript $(OPT_R) GO.R $< $(OPT_ANNOTATION) $(TABLE_DIR) $@ &> $(LOG_DIR)/080_GO.log
 
 $(FINAL_KEGG).pdf : $(FINAL_SUMMARY).csv
 	@printf "$(P_INFO) KEGG annotation.\n"
-	@printf "$(P_LOG)/KEGG.log\n\n"
-	Rscript $(OPT_R) KEGG.R $< $(OPT_ANNOTATION) $(TABLE_DIR) $@ &> $(LOG_DIR)/KEGG.log
+	@printf "$(P_LOG)/090_KEGG.log\n\n"
+	Rscript $(OPT_R) KEGG.R $< $(OPT_ANNOTATION) $(TABLE_DIR) $@ &> $(LOG_DIR)/090_KEGG.log
+
+# }}}
+# CLEANING {{{
+# --------------------------------------------------------------------
+
+
 
 # }}}
 
+# ARCHIVE {{{
+# -----------------------------------------------------------------------------
+
+archive-all: $(OUTPUT_DIR)/transcripts.tar.gz archive-trinity archive-blast archive-assembly
+
+
+archive-trinity : $(OUTPUT_DIR)/trinity.tar.gz
+
+archive-blast : $(OUTPUT_DIR)/blast.tar.gz
+
+archive-assembly: $(OUTPUT_DIR)/assembly.tar.gz
+
+%.tar.gz : %/.c
+	@printf "$(P_INFO) Compressing $(dir $<)\n"
+	tar czvf $@ -C $(dir $<) . > $@-files
+	@printf "$(P_INFO) Removing $(dir $<).\n"
+	rm -rf $(dir $<)
+
+# }}}

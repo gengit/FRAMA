@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -9,7 +9,7 @@ Martin Bens, bensmartin@gmail.com
 
 =head1 DESCRIPTION
 
-Create one line for each GenBank entry. 
+Create one line for each GenBank entry.
 
 =head1 OPTIONS
 
@@ -28,7 +28,7 @@ Input file.
 
 Output file. [default: STDOUT]
 
-=item B<-cds> 
+=item B<-cds>
 
 CDS coordinates based on mRNA sequence (ID, Sym, start, end)
 
@@ -38,9 +38,6 @@ CDS coordinates based on mRNA sequence (ID, Sym, start, end)
 
 use strict;
 use warnings;
-
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 
 use Getopt::Long;
 use File::Basename;

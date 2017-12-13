@@ -36,9 +36,6 @@ blast parameter
 use strict;
 use warnings;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
-
 use Getopt::Long;
 use File::Basename;
 use Data::Dumper;

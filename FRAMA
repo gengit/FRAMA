@@ -48,13 +48,15 @@ then
     exit 1;
 fi
 
+CONFIG=$1
+
 if [ ! -e "$1" ]
 then
     echo "File not found: $1"
     exit 1;
 fi
 
-CONFIG=$(readlink -f $1)
+CONFIG=$(readlink -f $CONFIG)
 PARAMETER=$2
 if [ -z "$2" ]
 then
@@ -64,15 +66,6 @@ fi
 CPUS=$(cat $1 | perl -ne 'BEGIN {$found=0}; if (/^OPT_CPUS\s*:=\s*(\d+)/) { print $1; $found = 1; } END {print "1" if (not $found);}')
 
 case "$PARAMETER" in
-    # deligate cleanups
-    scratch)
-        cd $DIR && make FILE:=$1 full-cleanup
-        execute "--silent" $CONFIG $DIR
-        ;;
-    cleanup)
-        cd $DIR && make FILE:=$1 cleanup
-        execute "--silent" $CONFIG $DIR
-        ;;
     verbose)
         # prints all commands
         execute "" $CONFIG $DIR
@@ -83,6 +76,7 @@ case "$PARAMETER" in
         ;;
     *)
         # assume further make parameter
-        execute $PARAMETER $CONFIG $DIR
+        shift
+        cd $DIR && make FILE:=$CONFIG "$@"
 esac
 

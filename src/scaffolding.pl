@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -85,8 +85,11 @@ of past].
 use strict;
 use warnings;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
+use Cwd qw(realpath);
+BEGIN {
+    my ($mypath) = realpath($0)=~m/(^.*)\//;
+    push @INC, "$mypath/../lib/perl";
+}
 
 use Getopt::Long;
 use Data::Dumper;
@@ -139,7 +142,7 @@ GetOptions(
     'out-combined|oc=s', 'out-final|of=s',
     'cpu=i',             'assembling=s',
     'out-filtered=s',    'fragment-overlap=s',
-    'help', 'force-output', 'useId', 
+    'help', 'force-output', 'useId',
 ) or pod2usage(1);
 
 pod2usage( -verbose => 2 ) if $opt{help};
@@ -246,9 +249,9 @@ print "##\n\n";
 unless ( @fragments > 0 ) {
     print "# No fragments found. Nothing to do.\n";
     if ($opt{'force-output'} && $opt{output}) {
-        my $io = Bio::SeqIO->new( 
-            -file => ">" . $opt{output}, 
-            -format => "fasta" 
+        my $io = Bio::SeqIO->new(
+            -file => ">" . $opt{output},
+            -format => "fasta"
         );
         $io->write_seq( $contig_seq );
     }
@@ -319,11 +322,11 @@ if (   ( $opt{cds} && $aln->num_sequences <= 3 )
 {
     # TODO: write contig IDs of clusters to file
     print "\n# Nothing to do.\n";
-    
+
     if ($opt{'force-output'} && $opt{output}) {
-        my $io = Bio::SeqIO->new( 
-            -file => ">" . $opt{output}, 
-            -format => "fasta" 
+        my $io = Bio::SeqIO->new(
+            -file => ">" . $opt{output},
+            -format => "fasta"
         );
         $io->write_seq( $contig_seq );
     }

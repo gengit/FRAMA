@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -24,11 +24,11 @@ bundle, containing the largest number of common kmers.
 
 Base directory of trinity (which must contain intermediate files)
 
-=item B<-output> 
+=item B<-output>
 
 Output file of table (default: STDOUT)
 
-=item B<-version> 
+=item B<-version>
 
 Trinity changed the name pattern of contig ids and intermediate filename/paths.
 Specify "c" for contig ids following name pattern like "c104698.graph_c0_seq1"

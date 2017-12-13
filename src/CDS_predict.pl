@@ -78,8 +78,11 @@ successfull prediction)
 use strict;
 use warnings;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
+use Cwd qw(realpath);
+BEGIN {
+    my ($mypath) = realpath($0)=~m/(^.*)\//;
+    push @INC, "$mypath/../lib/perl";
+}
 
 use Getopt::Long;
 use File::Basename;
@@ -626,13 +629,13 @@ sub getIntronLess {
 
         # introns are zero based => +1
         my ($re_start, $re_end) = (
-            $string->location_from_column($e_start + 1), 
+            $string->location_from_column($e_start + 1),
             $string->location_from_column($e_end + 1)
         );
         $re_start = ($re_start) ? $re_start->start : 1;
         $re_end   = ($re_end)   ? $re_end->end     : 1;
 
-        push @exon_string, 
+        push @exon_string,
             substr($string_seq, $re_start - 1, ($re_end - $re_start + 1));
         push @exons, [$re_start, $re_end];
         $length += $re_end - $re_start + 1;

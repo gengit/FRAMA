@@ -13,7 +13,7 @@ Combines all HSP of one hit. Total score is sum of all HSP-scores.
 Additionally, highest HSP-score and covered regions on query and target are
 added. Identity of hit is mean of all HSPs.
 
-Format: 
+Format:
  1 QueryID,
  2 TargetID,
  3 #HSPs,
@@ -40,15 +40,15 @@ Format:
 
 WU-Blast result in table format with topcombo and links column.
 
-=item B<-lq> 
+=item B<-lq>
 
 File with length of queries (Column1: ID, Column2: length)
 
-=item B<-lt> 
+=item B<-lt>
 
 File with length of target (Column1: ID, Column2: length)
 
-=item B<-output> 
+=item B<-output>
 
 Output file (default: STDOUT)
 
@@ -58,9 +58,6 @@ Output file (default: STDOUT)
 
 use strict;
 use warnings;
-
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 
 use Getopt::Long;
 use Data::Dumper;

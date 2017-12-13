@@ -4,16 +4,17 @@ use warnings;
 use strict;
 
 =pod
+
 =head1 INFO
 Martin Bens, bensmartin@gmail.com
 2014-07-30
 
 =head1 DESCRIPTION
 
-Infers gene boundaries of single or multi-gene contigs. 
+Infers gene boundaries of single or multi-gene contigs.
 
 Example output:
-    
+
     #strand  prev_cds_end  centerL  centerR  prom_start  prom_end  clip  clipscore  start  end   transcript  gene
     1        1             1        2968     -1          -1        3296  1.250      1      3296  ACC_GENA   geneA
     -1       2529          2968     4471     4511        4550      3273  1.019      3273   4471  ACC_GENB   geneB
@@ -34,46 +35,49 @@ read data, ortholog and PAS).
 Specify length of reference UTR (length applies to UTR after trimming of
 'N' and 'A').
 
-=item B<-prefix> 
+=item B<-prefix>
 
 Prefix of output files (default: mRNA)
 
-=item B<-output> 
+=item B<-output>
 
 Output directory (default: out).
 
-=item B<-ortholog> 
+=item B<-ortholog>
 
 Fasta file with full length sequence of orthologs.
 
-=item B<-contig> 
+=item B<-contig>
 
 Fasta file with sequence to clip.
 
-=item B<-readfile> 
+=item B<-readfile>
 
 All reads in fasta format (poly(A) read step). Separate multiple files with
 ",".
 
-=item B<-input> 
+=item B<-input>
 
 Tab delimited table with annotated CDS regions (and Promoters if known).
 Otherwise, only clipping 3' end based on best score.
 
     #feature	symbol	accession	start	end	  strand
-    CDS	        geneA	ACC_GENA	1261	2529   1	    
-    CDS	        geneB	ACC_GENB	3406	4084  -1	    
-    PRO	        geneB	ACC_GENB	4511	4550  -1	    
-    CDS	        geneC	ACC_GENC	4856	5344   1	    
-    PRO	        geneC	ACC_GENC	4813	4852   1	    
+    CDS	        geneA	ACC_GENA	1261	2529   1
+    CDS	        geneB	ACC_GENB	3406	4084  -1
+    PRO	        geneB	ACC_GENB	4511	4550  -1
+    CDS	        geneC	ACC_GENC	4856	5344   1
+    PRO	        geneC	ACC_GENC	4813	4852   1
 
 
 =back
 
 =cut
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
+use Cwd qw(realpath);
+BEGIN {
+    my ($mypath) = realpath($0)=~m/(^.*)\//;
+    push @INC, "$mypath/../lib/perl";
+}
 
 use File::Temp qw(tempfile tempdir);
 use File::Path qw(make_path remove_tree);
@@ -104,8 +108,10 @@ use constant MIN_SCORE   => 1.0;
 
 use constant MAX_INT => 9**9**9;
 
+my ($MYPATH) = realpath($0)=~m/(^.*)\//;
+
 my %opt = (
-    PATH_POLYA    => "$FindBin::Bin/polyamisc/",
+    PATH_POLYA    => "$MYPATH/polyamisc/",
     'utr-length' => 50,
     'prefix'     => "mRNA",
     'output'     => 'out',
@@ -153,7 +159,7 @@ if (exists $opt{input}) {
         $promoters{$e[2]} =  {start => $e[3], end => $e[4], strand => $e[5], sym => $e[1], seq => undef, transcript => $e[2]} if ($e[0] eq "PRO");
     }
     close $fh;
-} 
+}
 
 # add ortholog sequence
 my $io = Bio::SeqIO->new(-file => $opt{ortholog}, -format => "fasta");
@@ -306,13 +312,13 @@ if (@sorted_keys == 1) {
         if ($prom) {
             ($prom_start, $prom_end) = ($prom->{start}, $prom->{end});
             $start = $prom_end;
-        } 
+        }
 
         my $end = $contig_seq->length;
         my ($pos, $score) = bestClip($A->{scorefile}, $A->{end});
         if ($pos > 0 && $pos < ($length-30)) {
             $end = $pos
-        } 
+        }
 
         print "1\tNA\tNA\tNA\t$prom_start\t$prom_end\t$pos\t$score\t$start\t$end\t$key_A\t".$A->{sym}."\n";
     } else {
@@ -341,14 +347,14 @@ if (@sorted_keys == 1) {
 
             # start
             my ($pos, $score) = bestClip($A->{scorefile}, $previous_cds, $A->{start});
-            my $start = $pos if ($pos > 30); 
+            my $start = $pos if ($pos > 30);
             if ($pos > 30) {
                 $start = $pos;
             } else {
                 $start = $centers[$i];
             }
 
-            # end 
+            # end
             my $prom = $promoters{$A->{transcript}};
             my ($prom_pos, $prom_start, $prom_end) = (MAX_INT, -1, -1);
             if ($prom) {
@@ -359,7 +365,7 @@ if (@sorted_keys == 1) {
 
             print "-1\t$previous_cds\t$centers[$i]\t$centers[$i+1]\t$prom_start\t$prom_end\t$pos\t$score\t$start\t$end\t$key_A\t".$A->{sym}."\n";
 
-        } else { 
+        } else {
 
             my $next_cds = $contig_seq->length;
             if ($B) {
@@ -381,7 +387,7 @@ if (@sorted_keys == 1) {
             # end
             my ($pos, $score) = bestClip($A->{scorefile}, $A->{end}, $next_cds);
             my $end = $centers[$i+1];
-            $end = $pos if ($pos > 0 && $pos < $length-30); 
+            $end = $pos if ($pos > 0 && $pos < $length-30);
 
             print "1\t$previous_cds\t$centers[$i]\t$centers[$i+1]\t$prom_start\t$prom_end\t$pos\t$score\t$start\t$end\t$key_A\t".$A->{sym}."\n";
         }
@@ -448,9 +454,9 @@ sub mRNA_featureSelection {
 
         my @header = @content[0..2];
         @content = reverse @content[3..$#content];
-        
+
         open my $out, ">", $args->{output} or die $!;
-        
+
         for (@header) {
             print $out $_;
         }
@@ -479,7 +485,7 @@ sub covDrop {
             $command =
             "cat $args->{cov} | $opt{PATH_POLYA}polyacov_dropcov_simple.pl - > $args->{drop} ";
             $failed = system($command);
-        } 
+        }
     } else {
         # subsequent scripts handle empty files
         system("touch $args->{cov}");
@@ -626,7 +632,7 @@ sub alignBowtie {
 
     my @files = split ",", $opt{readfile};
     for (@files) {
-        $failed =  system("perl -pe 's/^>@/>/' $_ >> $reads");
+        $failed =  system("$^X -pe 's/^>@/>/' $_ >> $reads");
         if ($failed) {
             print STDERR "Read preprocessing went wrong\n\n";
             return 1;
@@ -659,9 +665,15 @@ sub alignBowtie {
         system("rm $sam");
     } else {
 
-        $failed = system("samtools view -bS $sam > $sam.unsorted.bam 2> /dev/null") unless ($failed);
-        $failed = system("samtools sort $sam.unsorted.bam > $args->{output}.bam") unless ($failed);
-        $failed = system("samtools index $args->{output}.bam") unless ($failed);
+        my $command = "samtools view -bS $sam -o $sam.unsorted.bam";
+        $failed = system($command) unless ($failed);
+
+        $command = "samtools sort -o $args->{output}.bam $sam.unsorted.bam";
+        $failed = system($command) unless ($failed);
+
+        $command = "samtools index $args->{output}.bam";
+        $failed = system($command) unless ($failed);
+
         if ($failed) {
             print STDERR "Failed to convert SAM to BAM.\n";
             return $failed;
@@ -697,7 +709,7 @@ sub UTRaln {
     return 1 if ($failed);
 
     my @command = (
-        "$^X", "$FindBin::Bin/polyamisc/UTR.pl", "-end-gap 0.5",
+        "$^X", "$MYPATH/polyamisc/UTR.pl", "-end-gap 0.5",
         "-i $args->{output_aln} |",
         "$opt{PATH_POLYA}polyahomol_score.pl - >",
         $args->{output_txt}
@@ -718,7 +730,7 @@ sub polyAreads {
     }
 
     my @commands = (
-        "$^X $FindBin::Bin/polyamisc/bam_polyA.pl",
+        "$^X $MYPATH/polyamisc/bam_polyA.pl",
         "-i $args->{input}.bam |",
         "$opt{PATH_POLYA}/polyaread_score.pl -d $args->{cov} - >",
         $args->{output}
@@ -726,6 +738,6 @@ sub polyAreads {
     return system(join " ", @commands);
 }
 
-1; 
+1;
 
 __END__

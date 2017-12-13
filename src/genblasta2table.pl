@@ -1,4 +1,4 @@
-#!/usr/bin/env perl 
+#!/usr/bin/env perl
 
 =pod
 
@@ -17,7 +17,7 @@ Martin Bens, bensmartin@gmail.com
 
 genblast result
 
-=item B<-output> 
+=item B<-output>
 
 outputs first rank only
 
@@ -28,8 +28,11 @@ outputs first rank only
 use strict;
 use warnings;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
+use Cwd qw(realpath);
+BEGIN {
+    my ($mypath) = realpath($0)=~m/(^.*)\//;
+    push @INC, "$mypath/../lib/perl";
+}
 
 use Getopt::Long;
 use File::Basename;

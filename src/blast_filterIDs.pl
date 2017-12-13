@@ -1,10 +1,7 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 
 use strict;
 use warnings;
-
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 
 use Getopt::Long;
 use File::Basename;
@@ -95,7 +92,7 @@ Either 'extract' or 'remove'. Extract keeps only specified IDs.
 =item B<-seq>
 
 Search "query" or "subject" for IDs.
-    
+
 =back
 
 =cut

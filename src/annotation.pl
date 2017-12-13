@@ -11,7 +11,7 @@ bensmartin@gmail.com
 =head1 DESCRIPTION
 
 Wrapper, that calls all steps necessary to scaffold, trim and predict CDS based
-on assigned orthologs. 
+on assigned orthologs.
 
 =head1 OPTIONS
 
@@ -36,7 +36,7 @@ Please specify prefered order of species, multiple equal regions originating
 from different species have been found. Number (0-based!) refers column in
 -ortholog-table. If not specied, column order of -ortholog-table will be used.
 
-=item B<-ortholog-cds> 
+=item B<-ortholog-cds>
 
 Fasta file containing all coding sequences for accessions used in
 -ortholog-table.
@@ -53,41 +53,41 @@ Reference Transcriptome
 
 Annotation: Trinity_annotation.csv,
 
-=item B<-ortholog> 
+=item B<-ortholog>
 
 Only write genbank entries for specific transcripts. Comma separated list of
 accession numbers.
 
-=item B<-ortholog-file> 
+=item B<-ortholog-file>
 
-=item B<-contig> 
+=item B<-contig>
 
 Only write genbank entries for specific contigs. Comma separated list of contig
 ids.
 
-=item B<-contig-file> 
+=item B<-contig-file>
 
-=item B<-output-file> 
+=item B<-output-file>
 
 Output GenBank file.
 
-=item B<-new> 
+=item B<-new>
 
-Specify if you want to rebuild a transcript (computes all steps again). 
+Specify if you want to rebuild a transcript (computes all steps again).
 
-=item B<-cpus> 
+=item B<-cpus>
 
 Number of CPUs
 
-=item B<-scaffolding> 
+=item B<-scaffolding>
 
 Blast result with fragments for scaffolding.
 
-=item B<-blast> 
+=item B<-blast>
 
 Blast result to annotated CDS predicted by GENSCAN.
 
-=item B<-genscan-matrix> 
+=item B<-genscan-matrix>
 
 Path to matrix to use for GENSCAN.
 
@@ -98,8 +98,11 @@ Path to matrix to use for GENSCAN.
 use strict;
 use warnings;
 
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
+use Cwd qw(realpath);
+BEGIN {
+    my ($mypath) = realpath($0)=~m/(^.*)\//;
+    push @INC, "$mypath/../lib/perl";
+}
 
 use GenbankHelper;
 
@@ -166,6 +169,9 @@ my %DIVISION = (
     'UNKNOWN'       => "UNK"
 );
 
+
+my ($MYPATH) = Cwd::realpath(__FILE__)=~m/(^.*)\//;
+
 if ( @ARGV == 0 ) {
     pod2usage( -message => "\n\tNo arguments. See -help.\n" );
     exit;
@@ -217,7 +223,7 @@ push @missing_files, "Assignment table not found."
   unless ( -e $opt{assignment} );
 push @missing_files, "Reference transcriptome not found."
   unless ( -e $opt{reference} );
-push @missing_files, "Trinity output not found." 
+push @missing_files, "Trinity output not found."
   unless ( -e $opt{trinity} );
 push @missing_files, "Blast results for CDS annotation not found."
   unless ( -e $opt{blast} );
@@ -268,13 +274,11 @@ $orth_taxon_name =~ s/\s/_/g;
 
 # READING/INDEXING INPUT FILES
 print "Reading reference genbank\n" if ( !$quiet );
-my $db_orth =
-  GenbankHelper::getIndex( $opt{reference}, -reindex => $opt{reindex} );
+my $db_orth = GenbankHelper::getIndex( $opt{reference}, -reindex => $opt{reindex} );
 die("\nError during indexing of: $opt{reference}\n\n") unless ($db_orth);
 
 print "Reading trinity contigs\n" if ( !$quiet );
-my $db_trinity =
-  Bio::DB::Fasta->new( $opt{trinity}, -reindex => $opt{reindex} );
+my $db_trinity = Bio::DB::Fasta->new( $opt{trinity}, -reindex => $opt{reindex} );
 die("\nError during indexing of: $opt{trinity}\n\n") unless ($db_trinity);
 
 print "Reading blast result for CDS annotation\n" if ( !$quiet );
@@ -383,7 +387,7 @@ sub combine {
         $t0 = Benchmark->new();
         print "Combining results...\n" if ($debug);
         my @command = (
-            "$FindBin::Bin/combine_fast.sh",
+            "$MYPATH/combine_fast.sh",
             $opt{'output-dir'}, "_final.gbk", $opt{'output-file'},
             "&> /dev/null"
         );
@@ -773,15 +777,14 @@ sub createTranscriptDir {
 sub performClipping {
     my ($obj) = @_;
 
-    my $cds_file   = catfile( $obj->{transcript_dir}, "3UTR_known_CDS.csv" );
-    my $blast_file = catfile( $obj->{transcript_dir}, "3UTR_blast.csv" );
-    my $output_genscan =
-      catfile( $obj->{transcript_dir}, "3UTR_annotation.csv" );
-    my $output_clip = catfile( $obj->{transcript_dir}, "3UTR_sumscore.txt" );
+    my $cds_file        = catfile( $obj->{transcript_dir}, "3UTR_known_CDS.csv" );
+    my $blast_file      = catfile( $obj->{transcript_dir}, "3UTR_blast.csv" );
+    my $output_genscan  = catfile( $obj->{transcript_dir}, "3UTR_annotation.csv" );
+    my $output_clip     = catfile( $obj->{transcript_dir}, "3UTR_sumscore.txt" );
     my $output_clip_err = catfile( $obj->{transcript_dir}, "3UTR.err" );
 
-    my $orth_file   = catfile( $obj->{transcript_dir}, "3UTR_ortholog.fa" );
-    my $contig_file = catfile( $obj->{transcript_dir}, "3UTR_contig.fa" );
+    my $orth_file       = catfile( $obj->{transcript_dir}, "3UTR_ortholog.fa" );
+    my $contig_file     = catfile( $obj->{transcript_dir}, "3UTR_contig.fa" );
 
     # assign symbols to CDS regions (genscan_annotation.pl)
     if ( !-e $output_genscan ) {
@@ -789,8 +792,12 @@ sub performClipping {
 
         # prepare CDS annotation table
         open my $fh, ">", $cds_file or die $!;
-        print $fh join "\t", $obj->{cds_start}, $obj->{cds_end}, 1,
-          $obj->{orth_sym}, $obj->{orth_id};
+        print $fh join "\t",
+          $obj->{cds_start},
+          $obj->{cds_end},
+          1,
+          $obj->{orth_sym},
+          $obj->{orth_id};
         print $fh "\n";
         close $fh;
 
@@ -804,7 +811,7 @@ sub performClipping {
 
         # BUILD COMMAND
         my @command = (
-            "$^X $FindBin::Bin/genscan_annotation.pl",
+            "$^X $MYPATH/genscan_annotation.pl",
             "-cds $cds_file",
             "-hits $blast_file",
             "-genscan",
@@ -814,7 +821,7 @@ sub performClipping {
 
         my $command =  join " ", @command;
         logcommand($obj->{transcript_dir}, $command);
-        
+
         # RUN
         my $failed = system( $command );
         if ($failed) {
@@ -841,8 +848,10 @@ sub performClipping {
         close $fh;
 
         # prepare fasta with sequences of orthologs
-        my $io =
-          Bio::SeqIO->new( -file => ">" . $orth_file, -format => "fasta" );
+        my $io = Bio::SeqIO->new(
+            -file => ">" . $orth_file,
+            -format => "fasta"
+        );
         for (@transcripts) {
             next if ( $_ eq "UNKNOWN" );
             my $tmp_orth_seq = $db_orth->get_Seq_by_acc($_);
@@ -851,8 +860,10 @@ sub performClipping {
         }
 
         # fasta with contig
-        $io =
-          Bio::SeqIO->new( -file => ">" . $contig_file, -format => "fasta" );
+        $io = Bio::SeqIO->new(
+            -file => ">" . $contig_file,
+            -format => "fasta"
+        );
         $io->write_seq( $obj->{contig_seq} );
 
         # get reads from scaffolding fragments
@@ -866,7 +877,7 @@ sub performClipping {
 
         # BUILD COMMAND
         my @command = (
-            "$^X $FindBin::Bin/clipping.pl",
+            "$^X $MYPATH/clipping.pl",
             "-contig $contig_file",
             "-ortholog $orth_file",
             "-input $output_genscan",
@@ -1010,7 +1021,7 @@ sub performCDSprediction {
         }
 
         my @command = (
-            "$^X $FindBin::Bin/CDS_predict.pl", "-contig $contig_file",
+            "$^X $MYPATH/CDS_predict.pl", "-contig $contig_file",
             "-compareTo",                       $obj->{orth_id},
             "-seleno $selenopos",               "-out-aln $out_aln_file",
             "-out-genscan $out_genscan_file",   "-unaligned",
@@ -1279,7 +1290,7 @@ sub performScaffolding {
         }
 
         my @command = (
-            "$^X $FindBin::Bin/scaffolding.pl",
+            "$^X $MYPATH/scaffolding.pl",
             "-out-combined $combined_file",
             "-ortholog $ortholog_file",
             "-contig $contig_file",
@@ -1403,7 +1414,7 @@ sub getTaxon {
 
     if ($@) {
         print STDERR "WARNING: Failed to connect to taxonomy database. No internet access?\n";
-    } 
+    }
     unless ($taxon) {
         print STDERR "WARNING: Could not retrieve taxon information for ID: $id\n";
     } else {

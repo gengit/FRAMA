@@ -13,9 +13,9 @@ Martin Bens  (bensmartin@gmail.com)
 =head1 DESCRIPTION
 
 Find overlap between specific transcript pairs (provided by -bbh) based on
-blast hits. 
+blast hits.
 
-Output: 
+Output:
  1 possibleFusionID
  2 bbhID
  3 target
@@ -35,7 +35,7 @@ Output:
 
 Blast tabular output, as produced by blast_sort.pl. This file has to be sorted
 by Target. Mapping reference transcripts to an assembly  (query: annotation,
-database: assembly). 
+database: assembly).
 
 QUERY_ID     => 0
 TARGET_ID    => 1
@@ -45,12 +45,12 @@ TARGET_END   => 4
 QUERY_COV    => 5
 IDENTITY     => 6
 
-=item B<-bbh> 
+=item B<-bbh>
 
 Table with contigID in first column and targetID in second column. We look only
 in these target transcripts for potentialy fused transcripts.
 
-=item B<-lq> 
+=item B<-lq>
 
 Length of query transcripts. (first column queryID and second column
 queryLength)
@@ -60,11 +60,11 @@ queryLength)
 Maximum of allowed overlapped (in perc.) between fusion transcripts (based on
 transcript size).  [int(max(bbh_length,transcript_length) * (max-overlap/100))]
 
-=item B<-min-identity> 
+=item B<-min-identity>
 
 Minimum required identity of hit
 
-=item B<-min-frac-size> 
+=item B<-min-frac-size>
 
 Minimum size of transcript which shows no overlap.
 
@@ -74,9 +74,6 @@ Minimum size of transcript which shows no overlap.
 
 use strict;
 use warnings;
-
-use FindBin;
-use lib "$FindBin::Bin/../lib/perl";
 
 use Getopt::Long;
 use File::Basename;
@@ -177,7 +174,7 @@ while (<$inputfh>) {
     chomp;
     my @e = split "\t";
 
-    # new result if another target 
+    # new result if another target
     if ($current_fusion ne $e[TARGET_ID]) {
 
         # if contig has BBH, look for fusion genes
@@ -207,12 +204,12 @@ sub process {
 
     @remaining_lines = $remaining_lines[0] if ($bestonly);
 
-    # filter for 
+    # filter for
     # - already annotated references
-    # - coverage 
+    # - coverage
     # - identity
-    @remaining_lines = grep { 
-        ($_->[QUERY_COV] >= $thr_querycov) && 
+    @remaining_lines = grep {
+        ($_->[QUERY_COV] >= $thr_querycov) &&
         ($_->[IDENTITY] >= $thr_identity) &&
         (!exists $bbh_target2fusion{$_->[QUERY_ID]})
     } @remaining_lines;
@@ -320,9 +317,9 @@ sub Bio::Range::overlap_extend {
 sub getMax {
     my ($x, $y) = @_;
 
-    if ($x > $y) { 
-        return $x 
-    } else { 
+    if ($x > $y) {
+        return $x
+    } else {
         return $y
     }
 }
